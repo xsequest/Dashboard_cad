@@ -1,0 +1,6 @@
+pandas
+streamlit
+plotly
+locale
+sidrapy
+scipy
