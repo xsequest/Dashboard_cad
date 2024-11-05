@@ -2,15 +2,12 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-import locale
 import sidrapy
 
 
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-
-# Função para formatar números no estilo brasileiro
 def format_number_br(number):
-    return locale.format_string('%.0f', number, grouping=True).replace(',', '.')
+    number_str = f"{number:,.0f}".replace(",", ".")
+    return number_str
 
 st.set_page_config(page_title="Dashboard CadÚnico", page_icon=":bar_chart:", layout="wide")
 
