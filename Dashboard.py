@@ -709,7 +709,7 @@ with tab_estado:
                     # Personalizar o layout
                     fig_fam_uni_ind.update_layout(
                         title={
-                            'text': f'Número de Famílias Unipessoais Inscritas em {selected_estado}<br>(2023-2024) *Procad',
+                            'text': f'Número de Famílias Unipessoais Inscritas em {selected_estado}<br>(2023-2024) *Janela Procad*',
                             'x': 0.5,  # Centraliza o título
                             'xanchor': 'center',
                             'yanchor': 'top'
