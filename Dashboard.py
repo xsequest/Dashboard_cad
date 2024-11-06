@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import sidrapy
 
-
+# Função para formatar números no estilo brasileiro
 def format_number_br(number):
     number_str = f"{number:,.0f}".replace(",", ".")
     return number_str
@@ -501,6 +501,7 @@ with tab_estado:
                         st.text("Opção 'Todas' está em construção!")
                     else:
                         if len(selected_faixa_multi) == 1:
+                            ##### ESTADO single ###################################################################################################
                             df_selected_single = df_cadúnico_estado.loc[df_cadúnico_estado['Data'].dt.year == selected_year].copy()
                             y_single_formatted = [format_numbers(val) for val in df_selected_single[dict_faixa[selected_faixa_multi[0]]]]
                             meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -545,9 +546,55 @@ with tab_estado:
                                 ),
                             )
                             st.plotly_chart(fig_single_select, theme="streamlit", use_container_width=True)
+
+                            st.divider()
+                            ###### BRASIL single #########################################################################################################
+                            df_selected_single_br = df_cadúnico_br.loc[df_cadúnico_br['Data'].dt.year == selected_year].copy()
+                            y_single_formatted_br = [format_numbers(val) for val in df_selected_single_br[dict_faixa[selected_faixa_multi[0]]]]
+                          
+                            # Gráfico com uma linha
+                            fig_single_select_br = go.Figure()
+                            fig_single_select_br.add_trace(
+                                go.Scatter(
+                                    x=meses_x,
+                                    y=df_selected_single_br[dict_faixa[selected_faixa_multi[0]]],
+                                    name=selected_faixa_multi[0],
+                                    line=dict(color='#506e9a'),
+                                    mode='lines+markers',
+                                    text=y_single_formatted_br,
+                                    hovertemplate='%{text}<extra></extra>',
+                                    marker=dict(
+                                        size=6,
+                                        color='white',
+                                        line=dict(color='#506e9a', width=2)
+                                    )
+                                )
+                            )
+                            
+                            fig_single_select_br.update_layout(
+                                title={
+                                    'text': f"Famílias em <b>{selected_faixa_multi[0]}</b><br>- <b>Brasil</b> - {selected_year}",
+                                    'y': 0.95,
+                                    'x': 0.5,
+                                    'xanchor': 'center',
+                                    'yanchor': 'top',
+                                    'font': dict(size=20)
+                                },
+                                showlegend=True,
+                                plot_bgcolor='white',
+                                yaxis=dict(
+                                    showgrid=True,
+                                    gridcolor='lightgray',
+                                    title=dict(text=selected_faixa_multi[0], font=dict(color='#506e9a')),
+                                    tickfont=dict(color='#506e9a')
+                                ),
+                            )
+                            st.plotly_chart(fig_single_select_br, theme="streamlit", use_container_width=True)
+
+                            
                         ############################################################################################################
                         elif len(selected_faixa_multi) > 1:
-                            # Dados para múltiplas faixas
+                            ###### ESTADO Multi ###################################################################################
                             df_selected_multi = df_cadúnico_estado.loc[df_cadúnico_estado['Data'].dt.year == selected_year].copy()
                             meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
                             ultimo_mes = df_selected_multi['Mês'].max()
@@ -630,6 +677,88 @@ with tab_estado:
                             )
                             st.plotly_chart(fig_multi_select, theme="streamlit", use_container_width=True)
 
+                            st.divider()
+
+                            ###### BRASIL Multi ##############################################################################################
+                            df_selected_multi_br = df_cadúnico_br.loc[df_cadúnico_br['Data'].dt.year == selected_year].copy()
+                           
+                            # Formatando valores para exibição nas legendas
+                            y1_formatted_br = [format_numbers(val) for val in df_selected_multi_br[dict_faixa[selected_faixa_multi[0]]]]
+                            y2_formatted_br = [format_numbers(val) for val in df_selected_multi_br[dict_faixa[selected_faixa_multi[1]]]]
+
+                            # Gráfico com duas linhas
+                            fig_multi_select_br = make_subplots(specs=[[{"secondary_y": True}]])
+                            
+                            # Linha para a primeira faixa
+                            fig_multi_select_br.add_trace(
+                                go.Scatter(
+                                    x=meses_x,
+                                    y=df_selected_multi_br[dict_faixa[selected_faixa_multi[0]]],
+                                    name=selected_faixa_multi[0],
+                                    line=dict(color='#506e9a'),
+                                    mode='lines+markers',
+                                    text=y1_formatted_br,
+                                    hovertemplate='%{text}<extra></extra>',
+                                    marker=dict(
+                                        size=6,
+                                        color='white',
+                                        line=dict(color='#506e9a', width=2)
+                                    )
+                                ),
+                                secondary_y=False
+                            )
+
+                            # Linha para a segunda faixa
+                            fig_multi_select_br.add_trace(
+                                go.Scatter(
+                                    x=meses_x,
+                                    y=df_selected_multi_br[dict_faixa[selected_faixa_multi[1]]],
+                                    name=selected_faixa_multi[1],
+                                    line=dict(color='#41b8d5'),
+                                    mode='lines+markers',
+                                    text=y2_formatted_br,
+                                    hovertemplate='%{text}<extra></extra>',
+                                    marker=dict(
+                                        size=6,
+                                        color='white',
+                                        line=dict(color='#41b8d5', width=2)
+                                    )
+                                ),
+                                secondary_y=True
+                            )
+
+                            fig_multi_select_br.update_layout(
+                                title={
+                                    'text': f"Famílias em <b>{selected_faixa_multi[0]}</b> e <b>{selected_faixa_multi[1]}</b><br>- <b>Brasil</b> - {selected_year}",
+                                    'y': 0.95,
+                                    'x': 0.5,
+                                    'xanchor': 'center',
+                                    'yanchor': 'top',
+                                    'font': dict(size=20)
+                                },
+                                showlegend=True,
+                                legend=dict(
+                                    orientation="h",
+                                    yanchor="bottom",
+                                    y=-0.2,
+                                    xanchor="center",
+                                    x=0.5
+                                ),
+                                plot_bgcolor='white',
+                                yaxis=dict(
+                                    showgrid=True,
+                                    gridcolor='lightgray',
+                                    title=dict(text=selected_faixa_multi[0], font=dict(color='#506e9a')),
+                                    tickfont=dict(color='#506e9a')
+                                ),
+                                yaxis2=dict(
+                                    showgrid=False,
+                                    title=dict(text=selected_faixa_multi[1], font=dict(color='#41b8d5')),
+                                    tickfont=dict(color='#41b8d5')
+                                ),
+                            )
+                            st.plotly_chart(fig_multi_select_br, theme="streamlit", use_container_width=True)
+
         ####################################################################################################################################################################################        
                 with col_crescimento:
                     with st.container(border=True):
@@ -709,7 +838,7 @@ with tab_estado:
                     # Personalizar o layout
                     fig_fam_uni_ind.update_layout(
                         title={
-                            'text': f'Número de Famílias Unipessoais Inscritas em {selected_estado}<br>(2023-2024) *Janela Procad*',
+                            'text': f'Número de Famílias Unipessoais Inscritas em {selected_estado}<br>(2023-2024) *Janela Procad',
                             'x': 0.5,  # Centraliza o título
                             'xanchor': 'center',
                             'yanchor': 'top'
