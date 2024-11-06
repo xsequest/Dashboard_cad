@@ -3,13 +3,21 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import sidrapy
+from scipy import stats
+from plotly.subplots import make_subplots
 
-# Função para formatar números no estilo brasileiro
+                    
+
+
+
+st.set_page_config(page_title="Dashboard CadÚnico", page_icon=":bar_chart:", layout="wide")
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 def format_number_br(number):
     number_str = f"{number:,.0f}".replace(",", ".")
     return number_str
-
-st.set_page_config(page_title="Dashboard CadÚnico", page_icon=":bar_chart:", layout="wide")
+def format_numbers(valor):
+    return '{:,.2f}'.format(valor).replace(',', 'X').replace('.', ',').replace('X', '.')
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 @st.cache_data
@@ -127,10 +135,377 @@ def carrengando_informações_fam_unipessoais():
     df_combinado = df_combinado.iloc[:, [0, 1, 2, 3, 4, 7, 5, 6]]
         
     return df_combinado
+#============================================================================================================================
+#     Gráficos (Funções modulares)
+#============================================================================================================================
+def Fig_line_chart(df, selected_faixa_, faixa_, show_media=False):  # Adicione o parâmetro show_media
+    media_estados = df_cadúnico.groupby('Data')[selected_faixa_].mean().reset_index()
+    meses_anuais = df[df['Data'].dt.month == 12]['Data']
+    ultimo_valor = df[selected_faixa_].iloc[-1]
+    ultima_data = df['Data'].iloc[-1]
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+    fig_linha = px.line(df, x='Data', y=selected_faixa_, markers=False, labels={selected_faixa_: faixa_, 'Data': 'Data'})
+    
+    # Adicionando a linha de média apenas se show_media for True
+    if show_media:
+        fig_linha.add_scatter(
+            x=media_estados['Data'],
+            y=media_estados[selected_faixa_],
+            mode='lines',
+            name='Média Estados',
+            line=dict(color='red'),
+            showlegend=True
+        )
+    
+    fig_linha.add_scatter(
+        x=meses_anuais,
+        y=df[df['Data'].isin(meses_anuais)][selected_faixa_],
+        mode='markers',
+        marker=dict(size=8, color="white", line=dict(width=2, color="green")),
+        showlegend=False
+    )
+
+    for data in meses_anuais:
+        valor = df[df['Data'] == data][selected_faixa_].values[0]
+        fig_linha.add_annotation(
+            x=data,
+            y=valor,
+            text=format_number_br(valor),
+            showarrow=False,
+            yshift=10,
+            font=dict(size=12)
+        )
+
+    fig_linha.add_annotation(
+        x=ultima_data,
+        y=ultimo_valor,
+        text=format_number_br(ultimo_valor),
+        showarrow=False,
+        yshift=10,
+        font=dict(size=12)
+    )
+
+    fig_linha.update_traces(line_color='green', selector=dict(mode='lines', showlegend=False))
+    fig_linha.update_layout(
+        xaxis_title=None,
+        yaxis_title='Número de famílias',
+        xaxis=dict(tickmode='array', tickvals=meses_anuais),
+        yaxis=dict(gridcolor='lightgrey'),
+        title={
+            'text': f'Gráfico de famílias em {faixa_} (2017-2024)<br>Goiás',
+            'x': 0.5,
+            'y': 0.95,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        }
+    )
+    return fig_linha
+
+#---------------------------------------------------------------------------------------------------------------------------------
+def Fig_candle_chart(df_, selected_faixa_, faixa_, selected_estado_):
+    medias_anuais_plotly = df_.groupby('Ano')[selected_faixa_].mean()
+
+    df_yearly = df_.groupby('Ano').agg({
+        selected_faixa_: ['first', 'max', 'min', 'last']
+    }).reset_index()
+    df_yearly.columns = ['Ano', 'Open', 'High', 'Low', 'Close']
+
+    df_yearly['Date'] = pd.to_datetime(df_yearly['Ano'].astype(str))
+
+    fig_candle = go.Figure()
+    fig_candle.add_trace(go.Candlestick(
+        x=df_yearly['Date'],
+        open=df_yearly['Open'],
+        high=df_yearly['High'],
+        low=df_yearly['Low'],
+        close=df_yearly['Close'],
+        name='Candlestick'
+    ))
+    fig_candle.add_trace(go.Scatter(
+        x=df_yearly['Date'],
+        y=medias_anuais_plotly,
+        mode='lines+markers',
+        name='Média Anual',
+        line=dict(color='grey', width=1, dash='dash'),
+        marker=dict(symbol='circle', size=3, color='white', line=dict(width=1, color='white'))
+    ))
+    fig_candle.update_layout(
+        title={
+            'text': f'Famílias em <b>{faixa_}</b> por Ano<br><sup><b>{selected_estado_}</sup>',
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'family': 'Calibri', 'size': 24}
+        },
+        yaxis_title='<b>Número de Famílias',
+        xaxis_title='<b>Ano',
+        xaxis_rangeslider_visible=False,
+        width=1200,
+        height=600,
+        font=dict(family='Calibri', size=14)
+    )
+    fig_candle.update_xaxes(
+        tickformat='%Y',
+        tickmode='array',
+        tickvals=df_yearly['Date']
+    )
+    fig_candle.update_xaxes(title_font=dict(family='Calibri', size=16))
+    fig_candle.update_yaxes(title_font=dict(family='Calibri', size=16))
+    return fig_candle
+#------------------------------------------------------------------------------------------------------------------------------------------------------------
+def Fig_trend_chart(df_, selected_faixa_, faixa_,  selected_estado_):
+    df_tendencia = df_.set_index('Data')[selected_faixa_]
+    df_tendencia = df_tendencia.reset_index()
+    df_tendencia['tempo'] = range(len(df_tendencia))
+    slope, intercept, _, _, _ = stats.linregress(df_tendencia['tempo'], df_tendencia[selected_faixa_])
+    linha_tendencia = slope * df_tendencia['tempo'] + intercept
+
+    fig_tendencia = go.Figure()
+    fig_tendencia.add_trace(go.Scatter(
+        x=df_tendencia['Data'],
+        y=df_tendencia[selected_faixa_],
+        mode='markers',
+        name='Dados Originais',
+        marker=dict(size=8, opacity=0.5)
+    ))
+    fig_tendencia.add_trace(go.Scatter(
+        x=df_tendencia['Data'],
+        y=linha_tendencia,
+        mode='lines',
+        name='Linha de Tendência',
+        line=dict(color='red', width=2)
+    ))
+    fig_tendencia.update_layout(
+        title={
+            'text': f'Tendência: Número de Famílias em {faixa_} - {selected_estado_}',
+            'x': 0.5,
+            'y': 0.9,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        }
+    )
+    fig_tendencia.update_xaxes(tickangle=0)
+    return fig_tendencia
+#---------------------------------------------------------------------------------------------------------------------------------------
+def calcular_tendencia(grupo, tendencia=True):
+    serie = grupo.reset_index(drop=True)
+    serie['tempo'] = range(len(serie))
+    
+    slope, intercept, _, _, _ = stats.linregress(serie['tempo'], serie[selected_faixa])
+    
+    linha_tendencia = slope * serie['tempo'] + intercept
+    
+    if tendencia:
+        diff_tendencia = linha_tendencia.iloc[-1] / linha_tendencia.iloc[0] - 1
+    else:
+        diff_tendencia = (serie[selected_faixa].iloc[-1] - linha_tendencia.iloc[-1]) / linha_tendencia.iloc[-1]
+    
+    return pd.Series({'Tendência': round(diff_tendencia*100, 2)})
+#---------------------------------------------------------------------------------------------------------------------------------------
+
+def Fig_trend_rank(df, selected_estado_, faixa_, metodo=True):
+    resultados = df.groupby('Sigla').apply(calcular_tendencia, metodo, include_groups=False).reset_index()
+    resultados = resultados.sort_values('Tendência', ascending=True)
+
+    selected_sigla = df.loc[df['Estado'] == selected_estado_, 'Sigla'].unique()[0] 
+    posicao = resultados['Sigla'].tolist().index(selected_sigla) + 1
+    total_estados = len(resultados)
+
+    titulo = (f"Inclinação da linha de tendência <b>{faixa_} por estado</b><br>2017/2023" 
+            if metodo else 
+            f"Diferença percentual entre o último valor real e a linha de tendência <b>{faixa_} por estado</b><br>2017/2023")
+
+    fig = px.bar(resultados, 
+                x='Sigla', 
+                y='Tendência',
+                opacity=0.7,
+                labels={'Sigla': 'Estado', 
+                        'Tendência': 'Variação da tendência (%) ' if metodo else 'Diferença real vs tendência (%) '})
+
+    # Definir as cores das barras
+    colors = ['green' if x == selected_sigla else '#87CEEB' for x in resultados['Sigla']]
+    fig.update_traces(marker_color=colors)
+
+    # Atualizar o layout
+    fig.update_layout(
+        xaxis_tickangle=0,
+        legend_title_text='Legenda',
+        title={
+            'text': titulo,
+            'x': 0.5,
+            'y': 0.95,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        }
+    )
+
+    # Obter o valor y para o estado selecionado
+    y_value = resultados[resultados['Sigla'] == selected_sigla]['Tendência'].values[0]
+
+    # Ajustar a posição da anotação com base no valor de y
+    if y_value >= 0:
+        ay = -40  # Anotação abaixo da barra para valores positivos
+        yanchor = 'bottom'
+    else:
+        ay = 40  # Anotação acima da barra para valores negativos
+        yanchor = 'top'
+
+    fig.add_annotation(
+        x=selected_sigla,
+        y=y_value,
+        text=f"{posicao}º",
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1,
+        arrowwidth=2,
+        arrowcolor="#636363",
+        ax=0,
+        ay=ay,
+        yanchor=yanchor,
+        font=dict(size=12, color="white"),
+        bgcolor="green",
+        opacity=0.8,
+        bordercolor="green",
+        borderwidth=2,
+        borderpad=4,
+        align="center"
+    )
+
+    return fig
+#-------------------------------------------------------------------------------------------------------------------------------------
+def create_line_trace(x, y, name, color, y_formatted):
+    """Cria um trace de linha para o gráfico"""
+    return go.Scatter(
+        x=x,
+        y=y,
+        name=name,
+        line=dict(color=color),
+        mode='lines+markers',
+        text=y_formatted,
+        hovertemplate='%{text}<extra></extra>',
+        marker=dict(
+            size=6,
+            color='white',
+            line=dict(color=color, width=2)
+        )
+    )
+
+def create_graph_layout(title, y1_title=None, y2_title=None, y1_color='#84c784', y2_color='#00766f'):
+    """Cria o layout do gráfico"""
+    layout = {
+        'title': {
+            'text': title,
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': dict(size=20)
+        },
+        'showlegend': True,
+        'plot_bgcolor': 'white',
+        'yaxis': dict(
+            showgrid=True,
+            gridcolor='lightgray',
+            title=dict(text=y1_title, font=dict(color=y1_color)),
+            tickfont=dict(color=y1_color)
+        )
+    }
+    
+    if y2_title:
+        layout['yaxis2'] = dict(
+            showgrid=False,
+            title=dict(text=y2_title, font=dict(color=y2_color)),
+            tickfont=dict(color=y2_color)
+        )
+        layout['legend'] = dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.2,
+            xanchor="center",
+            x=0.5
+        )
+    
+    return layout
+def plot_single_graph(df, selected_year, selected_faixa, region_name, color):
+    """Plota gráfico com uma única linha"""
+    df_selected = df.loc[df['Data'].dt.year == selected_year].copy()
+    meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    meses_x = meses[:df_selected['Mês'].max()]
+    
+    y_formatted = [format_numbers(val) for val in df_selected[dict_faixa[selected_faixa]]]
+    
+    fig = go.Figure()
+    fig.add_trace(create_line_trace(
+        meses_x,
+        df_selected[dict_faixa[selected_faixa]],
+        selected_faixa,
+        color,
+        y_formatted
+    ))
+    
+    fig.update_layout(create_graph_layout(
+        f"Famílias em <b>{selected_faixa}</b><br>- <b>{region_name}</b> - {selected_year}",
+        selected_faixa,
+        y1_color=color
+    ))
+    
+    return fig
+def plot_multi_graph(df, selected_year, selected_faixas, region_name):
+    """Plota gráfico com múltiplas linhas"""
+    df_selected = df.loc[df['Data'].dt.year == selected_year].copy()
+    meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    meses_x = meses[:df_selected['Mês'].max()]
+    
+    # Define as cores com base na região
+    if region_name == 'Brasil':
+        colors = ['#506e9a', '#41b8d5']
+    else:
+        colors = ['#84c784', '#00766f']
+        
+    y_formatted = []
+    for faixa in selected_faixas[:2]:
+        y_formatted.append([format_numbers(val) for val in df_selected[dict_faixa[faixa]]])
+    
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    
+    # Primeira linha
+    fig.add_trace(
+        create_line_trace(
+            meses_x,
+            df_selected[dict_faixa[selected_faixas[0]]],
+            selected_faixas[0],
+            colors[0],
+            y_formatted[0]
+        ),
+        secondary_y=False
+    )
+    
+    # Segunda linha
+    fig.add_trace(
+        create_line_trace(
+            meses_x,
+            df_selected[dict_faixa[selected_faixas[1]]],
+            selected_faixas[1],
+            colors[1],
+            y_formatted[1]
+        ),
+        secondary_y=True
+    )
+    
+    fig.update_layout(create_graph_layout(
+        f"Famílias em <b>{selected_faixas[0]}</b> e <b>{selected_faixas[1]}</b><br>- <b>{region_name}</b> - {selected_year}",
+        selected_faixas[0],
+        selected_faixas[1],
+        colors[0],
+        colors[1]
+    ))
+    
+    return fig
+
+#==============================================================================================================================================================
+#==============================================================================================================================================================
 st.title('Dashboard CadÚnico')
-
 
 list_faixa = ["Extrema Pobreza", "Pobreza", "Baixa Renda", "Até meio salário-mínimo"]
 dict_faixa = {'Extrema Pobreza': 'fam_ext_pob', 'Pobreza': 'fam_pob', 'Baixa Renda': 'fam_baixa_renda', "Até meio salário-mínimo": 'fam_acima_meio_sm'}
@@ -171,7 +546,7 @@ tab_panorama, tab_estado = st.tabs(["Panorama:", "Estado:"])
 
 
 ### PANORAMA
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#=======================================================================================================================================================================
 with tab_panorama:
     with st.container(border=True):
         with st.container(border=True):
@@ -263,9 +638,9 @@ with tab_panorama:
                     font=dict(size=9)
                 )
             st.plotly_chart(fig_sazonalidade, theme="streamlit", use_container_width=True)
-            #############################################################################################################################################################
+            #------------------------------------------------------------------------------------------------------------------------------------------------------------
             st.divider()
-            ############################################################################################################################################################
+            #------------------------------------------------------------------------------------------------------------------------------------------------------------
             df_seasonal_estado = df_cadúnico_estado.groupby('Mês')[selected_faixa].mean().reset_index()
             df_seasonal_estado['Mês'] = pd.Categorical(df_seasonal_estado['Mês'], categories=range(1, 13), ordered=True)
             df_seasonal_estado = df_seasonal_estado.sort_values('Mês')
@@ -306,7 +681,8 @@ with tab_panorama:
 
 
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------
+### ESTADO
+#======================================================================================================================================================================
 with tab_estado:
     with st.container(border=True):
         with st.container(border=True):
@@ -315,152 +691,20 @@ with tab_estado:
                 selected_graph = st.radio("Selecione o tipo de gráfico para a visualização:", ['Linha','Candle', 'Tendência'], index=0)
            
             with st.container(border=True):
-                ###########################################################################################################################
-                if selected_graph == 'Candle':
-                    medias_anuais_plotly = df_cadúnico_estado.groupby('Ano')[selected_faixa].mean()
-
-                    df_yearly = df_cadúnico_estado.groupby('Ano').agg({
-                        selected_faixa: ['first', 'max', 'min', 'last']
-                    }).reset_index()
-
-                    df_yearly.columns = ['Ano', 'Open', 'High', 'Low', 'Close']
-
-
-                    # Convertendo o ano para um objeto datetime
-                    df_yearly['Date'] = pd.to_datetime(df_yearly['Ano'].astype(str))
-
-                    fig_candle = go.Figure()
-
-                    # Adicionando o gráfico de velas
-                    fig_candle.add_trace(go.Candlestick(
-                        x=df_yearly['Date'],
-                        open=df_yearly['Open'],
-                        high=df_yearly['High'],
-                        low=df_yearly['Low'],
-                        close=df_yearly['Close'],
-                        name='Candlestick'
-                    ))
-
-                    # Adicionando a linha de média
-                    fig_candle.add_trace(go.Scatter(
-                        x=df_yearly['Date'],
-                        y=medias_anuais_plotly,
-                        mode='lines+markers',
-                        name='Média Anual',
-                        line=dict(color='grey', width=1, dash='dash'),
-                        marker=dict(symbol='circle', size=3, color='white', line=dict(width=1, color='white'))
-                    ))
-
-
-                    # Personalizando o layout
-                    fig_candle.update_layout(
-                        title={
-                            'text': f'Famílias em <b>{faixa}</b> por Ano<br><sup><b>{selected_estado}</sup>',
-                            'y': 0.95,
-                            'x': 0.5,
-                            'xanchor': 'center',
-                            'yanchor': 'top',
-                            'font': {'family': 'Calibri', 'size': 24}
-                        },
-                        yaxis_title='<b>Número de Famílias',
-                        xaxis_title='<b>Ano',
-                        xaxis_rangeslider_visible=False,
-                        width=1200,
-                        height=600,
-                        font=dict(family='Calibri', size=14)
-                    )
-                    fig_candle.update_xaxes(
-                        tickformat='%Y',
-                        tickmode='array',
-                        tickvals=df_yearly['Date']
-                    )
-                    fig_candle.update_xaxes(title_font=dict(family='Calibri', size=16))
-                    fig_candle.update_yaxes(title_font=dict(family='Calibri', size=16))
-
-                    st.plotly_chart(fig_candle, theme="streamlit", use_container_width=True)
-                ##################################################################################################################################
+                if selected_graph == 'Candle':                   
+                    st.plotly_chart(Fig_candle_chart(df_cadúnico_estado, selected_faixa, faixa, selected_estado), theme="streamlit", use_container_width=True)
+               
                 elif selected_graph == 'Tendência':
-                    from scipy import stats
-                    df_tendencia = df_cadúnico_estado.set_index('Data')[selected_faixa]
-                    df_tendencia = df_tendencia.reset_index()
-                    df_tendencia['tempo'] = range(len(df_tendencia))
-                    slope, intercept, r_value, p_value, std_err = stats.linregress(df_tendencia['tempo'], df_tendencia[selected_faixa])
-                    linha_tendencia = slope * df_tendencia['tempo'] + intercept
-                    fig_tendencia = go.Figure()
+                    st.plotly_chart(Fig_trend_chart(df_cadúnico_estado, selected_faixa, faixa, selected_estado), theme="streamlit", use_container_width=True) 
 
-                    fig_tendencia.add_trace(go.Scatter(
-                        x=df_tendencia['Data'],
-                        y=df_tendencia[selected_faixa],
-                        mode='markers',
-                        name='Dados Originais',
-                        marker=dict(size=8, opacity=0.5)
-                    ))
+                    on_tendencia = not(st.toggle("Selecionar diferença pelo último valor."))  
 
-                    fig_tendencia.add_trace(go.Scatter(
-                        x=df_tendencia['Data'],
-                        y=linha_tendencia,
-                        mode='lines',
-                        name='Linha de Tendência',
-                        line=dict(color='red', width=2)
-                    ))
+                    fig_rank_tendencia = Fig_trend_rank(df_cadúnico, selected_estado, faixa, on_tendencia)                    
+                    st.plotly_chart(fig_rank_tendencia, theme="streamlit", use_container_width=True)
 
-
-                    fig_tendencia.update_layout(
-                        title={
-                            'text': f'Tendência: Número de Famílias em {faixa} - {selected_estado}',
-                            'x': 0.5,
-                            'y': 0.9,
-                            'xanchor': 'center',
-                            'yanchor': 'top'
-                        }
-                    )
-
-                    fig_tendencia.update_xaxes(tickangle=45)
-                    st.plotly_chart(fig_tendencia, theme="streamlit", use_container_width=True)
-
-                ##############################################################################################
                 else: # Em linha
-                    meses_anuais = df_cadúnico_estado[df_cadúnico_estado['Data'].dt.month == 12]['Data']
-
-                    fig_linha = px.line(df_cadúnico_estado, x='Data', y=selected_faixa, markers=False, labels={selected_faixa: faixa, 'Data': 'Data'})
-
-                    # Adicionar apenas os marcadores para janeiro de cada ano
-                    fig_linha.add_scatter(
-                        x=meses_anuais,
-                        y=df_cadúnico_estado[df_cadúnico_estado['Data'].isin(meses_anuais)][selected_faixa],
-                        mode='markers',
-                        marker=dict(size=8, color="white", line=dict(width=2, color="green")),
-                        showlegend=False
-                    )
-
-                    # Adicionar anotações nos marcadores
-                    for data in meses_anuais:
-                        valor = df_cadúnico_estado[df_cadúnico_estado['Data'] == data][selected_faixa].values[0]
-                        fig_linha.add_annotation(
-                            x=data,
-                            y=valor,
-                            text=format_number_br(valor),
-                            showarrow=False,
-                            yshift=10,
-                            font=dict(size=12)
-                        )
-
-                    fig_linha.update_traces(line_color='green', selector=dict(mode='lines'))
-
-                    fig_linha.update_layout(
-                        xaxis_title=None,
-                        yaxis_title='Número de famílias',
-                        xaxis=dict(tickmode='array', tickvals=meses_anuais),
-                        yaxis=dict(gridcolor='lightgrey'),
-                        title={
-                            'text': f'Gráfico de famílias em {faixa} (2017-2024)',
-                            'x': 0.5,
-                            'y': 0.95,
-                            'xanchor': 'center',
-                            'yanchor': 'top'
-                        }
-                    )
-                    st.plotly_chart(fig_linha, theme="streamlit", use_container_width=True)
+                    on_media = st.toggle('Mostrar média dos estados.')
+                    st.plotly_chart(Fig_line_chart(df_cadúnico_estado, selected_faixa, faixa, on_media), theme="streamlit", use_container_width=True)
                 
 
         #------------------------------------------------------------------------------------------------------------------------------------
@@ -470,6 +714,7 @@ with tab_estado:
             with col_candle:
                 with st.container(border=True):
                     with st.container(border=True):
+                        #============================================================================================= 
                         col_year, col_faixa = st.columns(2)
                         with col_year:
                             anos_unicos = df_cadúnico_estado['Ano'].dropna().unique()
@@ -492,274 +737,55 @@ with tab_estado:
                                 mostrar_opcoes(list_faixa),
                                 default=default_values, max_selections=2
                             )
-                    #########################################################################################################################################
-                    def format_numbers(valor):
-                        return '{:,.2f}'.format(valor).replace(',', 'X').replace('.', ',').replace('X', '.')
-                    from plotly.subplots import make_subplots
-                    
+                    #=============================================================================================              
                     if 'Todas' in selected_faixa_multi:
                         st.text("Opção 'Todas' está em construção!")
                     else:
                         if len(selected_faixa_multi) == 1:
-                            ##### ESTADO single ###################################################################################################
-                            df_selected_single = df_cadúnico_estado.loc[df_cadúnico_estado['Data'].dt.year == selected_year].copy()
-                            y_single_formatted = [format_numbers(val) for val in df_selected_single[dict_faixa[selected_faixa_multi[0]]]]
-                            meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
-                            ultimo_mes = df_selected_single['Mês'].max()
-                            meses_x = meses[:ultimo_mes]
-                            
-                            # Gráfico com uma linha
-                            fig_single_select = go.Figure()
-                            fig_single_select.add_trace(
-                                go.Scatter(
-                                    x=meses_x,
-                                    y=df_selected_single[dict_faixa[selected_faixa_multi[0]]],
-                                    name=selected_faixa_multi[0],
-                                    line=dict(color='#84c784'),
-                                    mode='lines+markers',
-                                    text=y_single_formatted,
-                                    hovertemplate='%{text}<extra></extra>',
-                                    marker=dict(
-                                        size=6,
-                                        color='white',
-                                        line=dict(color='#84c784', width=2)
-                                    )
-                                )
+                            # Plot para estado único
+                            fig_estado = plot_single_graph(
+                                df_cadúnico_estado,
+                                selected_year,
+                                selected_faixa_multi[0],
+                                selected_estado,
+                                '#84c784'
                             )
+                            st.plotly_chart(fig_estado, theme="streamlit", use_container_width=True)
                             
-                            fig_single_select.update_layout(
-                                title={
-                                    'text': f"Famílias em <b>{selected_faixa_multi[0]}</b><br>- <b>{selected_estado}</b> - {selected_year}",
-                                    'y': 0.95,
-                                    'x': 0.5,
-                                    'xanchor': 'center',
-                                    'yanchor': 'top',
-                                    'font': dict(size=20)
-                                },
-                                showlegend=True,
-                                plot_bgcolor='white',
-                                yaxis=dict(
-                                    showgrid=True,
-                                    gridcolor='lightgray',
-                                    title=dict(text=selected_faixa_multi[0], font=dict(color='#84c784')),
-                                    tickfont=dict(color='#84c784')
-                                ),
-                            )
-                            st.plotly_chart(fig_single_select, theme="streamlit", use_container_width=True)
-
                             st.divider()
-                            ###### BRASIL single #########################################################################################################
-                            df_selected_single_br = df_cadúnico_br.loc[df_cadúnico_br['Data'].dt.year == selected_year].copy()
-                            y_single_formatted_br = [format_numbers(val) for val in df_selected_single_br[dict_faixa[selected_faixa_multi[0]]]]
-                          
-                            # Gráfico com uma linha
-                            fig_single_select_br = go.Figure()
-                            fig_single_select_br.add_trace(
-                                go.Scatter(
-                                    x=meses_x,
-                                    y=df_selected_single_br[dict_faixa[selected_faixa_multi[0]]],
-                                    name=selected_faixa_multi[0],
-                                    line=dict(color='#506e9a'),
-                                    mode='lines+markers',
-                                    text=y_single_formatted_br,
-                                    hovertemplate='%{text}<extra></extra>',
-                                    marker=dict(
-                                        size=6,
-                                        color='white',
-                                        line=dict(color='#506e9a', width=2)
-                                    )
-                                )
-                            )
                             
-                            fig_single_select_br.update_layout(
-                                title={
-                                    'text': f"Famílias em <b>{selected_faixa_multi[0]}</b><br>- <b>Brasil</b> - {selected_year}",
-                                    'y': 0.95,
-                                    'x': 0.5,
-                                    'xanchor': 'center',
-                                    'yanchor': 'top',
-                                    'font': dict(size=20)
-                                },
-                                showlegend=True,
-                                plot_bgcolor='white',
-                                yaxis=dict(
-                                    showgrid=True,
-                                    gridcolor='lightgray',
-                                    title=dict(text=selected_faixa_multi[0], font=dict(color='#506e9a')),
-                                    tickfont=dict(color='#506e9a')
-                                ),
+                            # Plot para Brasil único
+                            fig_brasil = plot_single_graph(
+                                df_cadúnico_br,
+                                selected_year,
+                                selected_faixa_multi[0],
+                                'Brasil',
+                                '#506e9a'
                             )
-                            st.plotly_chart(fig_single_select_br, theme="streamlit", use_container_width=True)
-
+                            st.plotly_chart(fig_brasil, theme="streamlit", use_container_width=True)
                             
-                        ############################################################################################################
                         elif len(selected_faixa_multi) > 1:
-                            ###### ESTADO Multi ###################################################################################
-                            df_selected_multi = df_cadúnico_estado.loc[df_cadúnico_estado['Data'].dt.year == selected_year].copy()
-                            meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
-                            ultimo_mes = df_selected_multi['Mês'].max()
-                            meses_x = meses[:ultimo_mes]
+                            # Plot para estado múltiplo
+                            fig_estado_multi = plot_multi_graph(
+                                df_cadúnico_estado,
+                                selected_year,
+                                selected_faixa_multi,
+                                selected_estado
+                            )
+                            st.plotly_chart(fig_estado_multi, theme="streamlit", use_container_width=True)
                             
-                            # Formatando valores para exibição nas legendas
-                            y1_formatted = [format_numbers(val) for val in df_selected_multi[dict_faixa[selected_faixa_multi[0]]]]
-                            y2_formatted = [format_numbers(val) for val in df_selected_multi[dict_faixa[selected_faixa_multi[1]]]]
-
-                            # Gráfico com duas linhas
-                            fig_multi_select = make_subplots(specs=[[{"secondary_y": True}]])
-                            
-                            # Linha para a primeira faixa
-                            fig_multi_select.add_trace(
-                                go.Scatter(
-                                    x=meses_x,
-                                    y=df_selected_multi[dict_faixa[selected_faixa_multi[0]]],
-                                    name=selected_faixa_multi[0],
-                                    line=dict(color='#84c784'),
-                                    mode='lines+markers',
-                                    text=y1_formatted,
-                                    hovertemplate='%{text}<extra></extra>',
-                                    marker=dict(
-                                        size=6,
-                                        color='white',
-                                        line=dict(color='#84c784', width=2)
-                                    )
-                                ),
-                                secondary_y=False
-                            )
-
-                            # Linha para a segunda faixa
-                            fig_multi_select.add_trace(
-                                go.Scatter(
-                                    x=meses_x,
-                                    y=df_selected_multi[dict_faixa[selected_faixa_multi[1]]],
-                                    name=selected_faixa_multi[1],
-                                    line=dict(color='#00766f'),
-                                    mode='lines+markers',
-                                    text=y2_formatted,
-                                    hovertemplate='%{text}<extra></extra>',
-                                    marker=dict(
-                                        size=6,
-                                        color='white',
-                                        line=dict(color='#00766f', width=2)
-                                    )
-                                ),
-                                secondary_y=True
-                            )
-
-                            fig_multi_select.update_layout(
-                                title={
-                                    'text': f"Famílias em <b>{selected_faixa_multi[0]}</b> e <b>{selected_faixa_multi[1]}</b><br>- <b>{selected_estado}</b> - {selected_year}",
-                                    'y': 0.95,
-                                    'x': 0.5,
-                                    'xanchor': 'center',
-                                    'yanchor': 'top',
-                                    'font': dict(size=20)
-                                },
-                                showlegend=True,
-                                legend=dict(
-                                    orientation="h",
-                                    yanchor="bottom",
-                                    y=-0.2,
-                                    xanchor="center",
-                                    x=0.5
-                                ),
-                                plot_bgcolor='white',
-                                yaxis=dict(
-                                    showgrid=True,
-                                    gridcolor='lightgray',
-                                    title=dict(text=selected_faixa_multi[0], font=dict(color='#84c784')),
-                                    tickfont=dict(color='#84c784')
-                                ),
-                                yaxis2=dict(
-                                    showgrid=False,
-                                    title=dict(text=selected_faixa_multi[1], font=dict(color='#00766f')),
-                                    tickfont=dict(color='#00766f')
-                                ),
-                            )
-                            st.plotly_chart(fig_multi_select, theme="streamlit", use_container_width=True)
-
                             st.divider()
-
-                            ###### BRASIL Multi ##############################################################################################
-                            df_selected_multi_br = df_cadúnico_br.loc[df_cadúnico_br['Data'].dt.year == selected_year].copy()
-                           
-                            # Formatando valores para exibição nas legendas
-                            y1_formatted_br = [format_numbers(val) for val in df_selected_multi_br[dict_faixa[selected_faixa_multi[0]]]]
-                            y2_formatted_br = [format_numbers(val) for val in df_selected_multi_br[dict_faixa[selected_faixa_multi[1]]]]
-
-                            # Gráfico com duas linhas
-                            fig_multi_select_br = make_subplots(specs=[[{"secondary_y": True}]])
                             
-                            # Linha para a primeira faixa
-                            fig_multi_select_br.add_trace(
-                                go.Scatter(
-                                    x=meses_x,
-                                    y=df_selected_multi_br[dict_faixa[selected_faixa_multi[0]]],
-                                    name=selected_faixa_multi[0],
-                                    line=dict(color='#506e9a'),
-                                    mode='lines+markers',
-                                    text=y1_formatted_br,
-                                    hovertemplate='%{text}<extra></extra>',
-                                    marker=dict(
-                                        size=6,
-                                        color='white',
-                                        line=dict(color='#506e9a', width=2)
-                                    )
-                                ),
-                                secondary_y=False
+                            # Plot para Brasil múltiplo
+                            fig_brasil_multi = plot_multi_graph(
+                                df_cadúnico_br,
+                                selected_year,
+                                selected_faixa_multi,
+                                'Brasil'
                             )
+                            st.plotly_chart(fig_brasil_multi, theme="streamlit", use_container_width=True)
 
-                            # Linha para a segunda faixa
-                            fig_multi_select_br.add_trace(
-                                go.Scatter(
-                                    x=meses_x,
-                                    y=df_selected_multi_br[dict_faixa[selected_faixa_multi[1]]],
-                                    name=selected_faixa_multi[1],
-                                    line=dict(color='#41b8d5'),
-                                    mode='lines+markers',
-                                    text=y2_formatted_br,
-                                    hovertemplate='%{text}<extra></extra>',
-                                    marker=dict(
-                                        size=6,
-                                        color='white',
-                                        line=dict(color='#41b8d5', width=2)
-                                    )
-                                ),
-                                secondary_y=True
-                            )
-
-                            fig_multi_select_br.update_layout(
-                                title={
-                                    'text': f"Famílias em <b>{selected_faixa_multi[0]}</b> e <b>{selected_faixa_multi[1]}</b><br>- <b>Brasil</b> - {selected_year}",
-                                    'y': 0.95,
-                                    'x': 0.5,
-                                    'xanchor': 'center',
-                                    'yanchor': 'top',
-                                    'font': dict(size=20)
-                                },
-                                showlegend=True,
-                                legend=dict(
-                                    orientation="h",
-                                    yanchor="bottom",
-                                    y=-0.2,
-                                    xanchor="center",
-                                    x=0.5
-                                ),
-                                plot_bgcolor='white',
-                                yaxis=dict(
-                                    showgrid=True,
-                                    gridcolor='lightgray',
-                                    title=dict(text=selected_faixa_multi[0], font=dict(color='#506e9a')),
-                                    tickfont=dict(color='#506e9a')
-                                ),
-                                yaxis2=dict(
-                                    showgrid=False,
-                                    title=dict(text=selected_faixa_multi[1], font=dict(color='#41b8d5')),
-                                    tickfont=dict(color='#41b8d5')
-                                ),
-                            )
-                            st.plotly_chart(fig_multi_select_br, theme="streamlit", use_container_width=True)
-
-        ####################################################################################################################################################################################        
+                #=========================================================================================================================================       
                 with col_crescimento:
                     with st.container(border=True):
                         df_growth = df_cadúnico_estado.groupby('Ano')[selected_faixa].last()
@@ -815,10 +841,10 @@ with tab_estado:
                         fig_crescimento.update_traces(hovertemplate='Ano: <b>%{x}</b><br>Taxa de crescimento: <b>%{y:.2f}%</b><extra></extra>')
                         st.plotly_chart(fig_crescimento, theme="streamlit", use_container_width=True)
         
-        
+        #===============================================================================================================================================
         with st.expander("Famílias Unipessoais Inscritas e Taxa de desocupação:"):
             col_fam_uni, col_desemprego = st.columns(2)
-            #######################################################################################################################
+            #===============================================================================================================================================
             with col_fam_uni:
                 with st.container(border=True):
                     df_selected_uni = df_fam_uni.loc[df_fam_uni['Estado'] == selected_estado].copy()
@@ -876,9 +902,10 @@ with tab_estado:
                     )
                     st.plotly_chart(fig_fam_uni_ind, theme="streamlit", use_container_width=True)  
 
+                    #-------------------------------------------------------------------------------------------------------
                     st.divider()
+                    #-------------------------------------------------------------------------------------------------------
 
-                    ###############################################################################################################
                     df_selected_uni['fam_inscritas'] = df_selected_uni['fam_inscritas'] / 1_000_000
                     df_selected_uni['fam_unipessoais_inscritas'] = df_selected_uni['fam_unipessoais_inscritas'] / 1_000_000
 
@@ -929,7 +956,7 @@ with tab_estado:
                     )
                     st.plotly_chart(fig_fam_uni, theme="streamlit", use_container_width=True)             
             
-            #################################################################################################################################
+            #===============================================================================================================================================
             with col_desemprego:
                 with st.container(border=True):
                     df_desemprego_estado = df_combined_desemprego.loc[df_combined_desemprego['Unidade'] == selected_estado].copy()
@@ -970,9 +997,11 @@ with tab_estado:
                     )
 
                     st.plotly_chart(fig_desemprego, theme="streamlit", use_container_width=True)
-                    ###########################################################################################
+
+                    #----------------------------------------------------------------------------------------
                     st.divider()
-                    ###########################################################################################
+                    #----------------------------------------------------------------------------------------
+
                     datas_unicas = sorted(set(df_desemprego_estado['Data']) & set(df_desemprego_br['Data']))
                     df_diferenca = pd.DataFrame(index=datas_unicas)
 
