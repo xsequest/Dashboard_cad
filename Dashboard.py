@@ -135,6 +135,26 @@ def carrengando_informações_fam_unipessoais():
     df_combinado = df_combinado.iloc[:, [0, 1, 2, 3, 4, 7, 5, 6]]
         
     return df_combinado
+
+def carregando_informações_media_familias_estado():
+    df_populacao = sidrapy.get_table(table_code="4714", variable=93, territorial_level="3", ibge_territorial_code="all")
+    df_populacao.columns = df_populacao.iloc[0]
+    df_populacao = df_populacao.iloc[1:, [6, 4]]
+    df_populacao.columns = ['Estado', 'População']
+    df_populacao['População'] = df_populacao['População'].astype(int)
+
+    med_fam = sidrapy.get_table(table_code="9877", territorial_level="3", ibge_territorial_code="all")
+    med_fam.columns = med_fam.iloc[0]
+    med_fam = med_fam.iloc[1:, [6, 4]]
+    med_fam.columns = ['Estado', 'n_med_fam']
+    med_fam['n_med_fam'] = med_fam['n_med_fam'].astype(float)
+
+    df_merged = pd.merge(df_populacao, med_fam, on='Estado', how='outer')
+    df_merged['Med_Fam'] = round(df_merged['População'] / df_merged['n_med_fam'], 2)
+    df_merged = df_merged.sort_values(by='Estado')
+    
+    return df_merged
+
 #============================================================================================================================
 #     Gráficos (Funções modulares)
 #============================================================================================================================
@@ -550,21 +570,20 @@ tab_panorama, tab_estado = st.tabs(["Panorama:", "Estado:"])
 with tab_panorama:
     with st.container(border=True):
         with st.container(border=True):
-            df_state = df_cadúnico[df_cadúnico['Ano'] <= 2023].groupby('Sigla')[selected_faixa].mean().reset_index()
-            df_state = df_state.sort_values(selected_faixa, ascending=False)
+            df_media_fam = carregando_informações_media_familias_estado()
 
-            df_2024 = df_cadúnico[df_cadúnico['Ano'] == 2024].groupby('Sigla')[selected_faixa].mean().reset_index()
+            df_year = df_cadúnico[df_cadúnico['Ano'] == 2024].groupby(['Sigla', 'Estado'])[selected_faixa].mean().reset_index()
 
-            df_combined = pd.merge(df_state, df_2024, on='Sigla', suffixes=('_geral', '_2024'))
+            df_combined = pd.merge(df_year, df_media_fam, on='Estado', how='outer')
 
-            df_combined = df_combined.sort_values(f'{selected_faixa}_geral', ascending=False)
+            df_combined = df_combined.sort_values('Med_Fam', ascending=False)
 
             fig = px.bar(df_combined, 
                         x='Sigla', 
-                        y=f'{selected_faixa}_geral',
+                        y='Med_Fam',
                         opacity=0.7,
                         labels={'Sigla': 'Estado', 
-                                f'{selected_faixa}_geral': 'Número médio de famílias'})
+                                f'Med_Fam': 'Número médio de famílias no Estado.'})
 
             # Definir as cores das barras
             colors = ['green' if x == df_cadúnico.loc[df_cadúnico['Estado'] == selected_estado, 'Sigla'].unique()[0] else '#87CEEB' for x in df_combined['Sigla']]
@@ -574,7 +593,7 @@ with tab_panorama:
             fig.add_trace(
                 go.Scatter(
                     x=df_combined['Sigla'],
-                    y=df_combined[f'{selected_faixa}_2024'],
+                    y=df_combined[f'{selected_faixa}'],
                     mode='lines+markers',
                     name='Média 2024',
                     line=dict(color='#FF4444', width=1, dash='dash'),  # Adicionando 'dash' aqui
