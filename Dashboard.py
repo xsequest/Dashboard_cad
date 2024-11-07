@@ -213,7 +213,7 @@ def Fig_line_chart(df, selected_faixa_, faixa_, show_media=False):  # Adicione o
         xaxis=dict(tickmode='array', tickvals=meses_anuais),
         yaxis=dict(gridcolor='lightgrey'),
         title={
-            'text': f'Gráfico de famílias em {faixa_} (2017-2024)<br>Goiás',
+            'text': f'Famílias em {faixa_} (2017-2024)<br>Goiás',
             'x': 0.5,
             'y': 0.95,
             'xanchor': 'center',
