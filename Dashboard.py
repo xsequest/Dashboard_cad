@@ -135,6 +135,7 @@ def carrengando_informações_fam_unipessoais():
     df_combinado = df_combinado.iloc[:, [0, 1, 2, 3, 4, 7, 5, 6]]
         
     return df_combinado
+
 @st.cache_data
 def carregando_informações_media_familias_estado():
     df_populacao = sidrapy.get_table(table_code="4714", variable=93, territorial_level="3", ibge_territorial_code="all")
@@ -595,7 +596,7 @@ with tab_panorama:
                     x=df_combined['Sigla'],
                     y=df_combined[f'{selected_faixa}'],
                     mode='lines+markers',
-                    name='Média 2024',
+                    name=f'{faixa}',
                     line=dict(color='#FF4444', width=1, dash='dash'),  # Adicionando 'dash' aqui
                     marker=dict(size=4)  # Opcional: ajusta o tamanho dos marcadores
                 )
@@ -608,7 +609,7 @@ with tab_panorama:
             )
             fig.update_layout(
                 title={
-                    'text': f'Média de famílias em <b>{faixa} por estado</b><br>2017/2023',
+                    'text': f'Média de famílias em <b>{faixa} por estado</b><br>2024',
                     'x': 0.5,
                     'y': 0.95,
                     'xanchor': 'center',
