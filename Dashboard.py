@@ -569,47 +569,92 @@ tab_panorama, tab_estado = st.tabs(["Panorama:", "Estado:"])
 ### PANORAMA
 #=======================================================================================================================================================================
 with tab_panorama:
-    with st.container(border=True):
-        with st.container(border=True):
-            df_media_fam = carregando_informações_media_familias_estado()
 
-            df_year = df_cadúnico[df_cadúnico['Ano'] == 2024].groupby(['Sigla', 'Estado'])[selected_faixa].mean().reset_index()
-
-            df_combined = pd.merge(df_year, df_media_fam, on='Estado', how='outer')
-
-            df_combined = df_combined.sort_values('Med_Fam', ascending=False)
-
-            fig = px.bar(df_combined, 
-                        x='Sigla', 
-                        y='Med_Fam',
-                        opacity=0.7,
-                        labels={'Sigla': 'Estado', 
-                                f'Med_Fam': 'Número médio de famílias no Estado.'})
-
-            # Definir as cores das barras
-            colors = ['green' if x == df_cadúnico.loc[df_cadúnico['Estado'] == selected_estado, 'Sigla'].unique()[0] else '#87CEEB' for x in df_combined['Sigla']]
-            fig.update_traces(marker_color=colors)
-
-            # Adicionar a linha para 2024
-            fig.add_trace(
-                go.Scatter(
-                    x=df_combined['Sigla'],
-                    y=df_combined[f'{selected_faixa}'],
-                    mode='lines+markers',
-                    name=f'{faixa}',
-                    line=dict(color='#FF4444', width=1, dash='dash'),  # Adicionando 'dash' aqui
-                    marker=dict(size=4)  # Opcional: ajusta o tamanho dos marcadores
-                )
+    # Funções para criar o gráfico
+    #----------------------------------------------------------------------------------------------------
+    def panorama_layout():
+        col_year, col_type, col_selection = st.columns(3)
+        
+        with col_year:
+            unique_years = sorted(df_cadúnico_estado['Ano'].dropna().unique(), reverse=True)
+            selected_year = st.selectbox(
+                'Selecione o Ano:', 
+                unique_years, 
+                index=0, 
+                key='panorama_year_select'
             )
+                
+        with col_type:
+            tipo_de_gráfico = st.radio(
+                label='Tipo de Gráfico',
+                options=["Padrão", "Proporção"],
+                key='panorama_type_radio'
+            )
+                
+        with col_selection:
+            if tipo_de_gráfico == "Padrão":
+                view_options = {
+                    'Média do ano': 'mean',
+                    'Último mês': 'last'
+                }
+                selected_view = st.selectbox(
+                    'Opções da linha:', 
+                    list(view_options.keys()),
+                    key='panorama_view_select'
+                )
+                selected_aggregation = view_options[selected_view]
+            else:
+                selected_view = "Proporção"
+                selected_aggregation = "Proporção"
+            
+        return selected_year, selected_view, selected_aggregation, tipo_de_gráfico
 
-            # Atualizar o layout
+    def processar_dados(selected_year, selected_aggregation, selected_faixa, tipo_de_gráfico):
+        df_media_fam = carregando_informações_media_familias_estado()
+        
+        # Se for tipo "Proporção", usamos mean como agregação
+        agg_function = 'mean' if tipo_de_gráfico == 'Proporção' else selected_aggregation
+        
+        df_year = (df_cadúnico[df_cadúnico['Ano'] == selected_year]
+                .groupby(['Sigla', 'Estado'])[selected_faixa]
+                .agg(agg_function)
+                .reset_index())
+        
+        df_combined = pd.merge(df_year, df_media_fam, on='Estado', how='outer')
+        df_combined['diff'] = (df_combined[selected_faixa] / df_combined['Med_Fam'])*100
+        
+        if tipo_de_gráfico == 'Proporção':
+            return df_combined.sort_values('diff', ascending=True)
+        return df_combined.sort_values('Med_Fam', ascending=False)
+
+    def criar_chart_title(selected_view, faixa, selected_year):
+        if selected_view == 'Média do ano':
+            return f"Média de famílias em <b>{faixa} por estado</b><br>{selected_year}"
+        return f"Famílias em <b>{faixa} por estado</b><br>Último mês de referência - {selected_year}"
+
+    def Fig_panorama_chart(df_combined, selected_estado, selected_faixa, faixa, panorama_titulo, tipo_de_gráfico):
+        selected_state_sigla = df_cadúnico.loc[df_cadúnico['Estado'] == selected_estado, 'Sigla'].unique()[0]
+        colors = ['green' if x == selected_state_sigla else '#87CEEB' for x in df_combined['Sigla']]
+
+        if tipo_de_gráfico == 'Proporção':
+            fig = px.bar(
+                df_combined,
+                x='Sigla',
+                y='diff',
+                opacity=0.7,
+                labels={
+                    'Sigla': 'Estado',
+                    'diff': 'Proporção (%)'
+                }
+            )
+            
+            fig.update_traces(marker_color=colors)
+            
             fig.update_layout(
                 xaxis_tickangle=0,
-                legend_title_text='Legenda'
-            )
-            fig.update_layout(
+                legend_title_text='Legenda',
                 title={
-                    'text': f'Média de famílias em <b>{faixa} por estado</b><br>2024',
+                    'text': f'Diferença percentual entre o número de famílias em {faixa} e o número médio de famílias em cada estado.',
                     'x': 0.5,
                     'y': 0.95,
                     'xanchor': 'center',
@@ -617,7 +662,65 @@ with tab_panorama:
                 }
             )
 
-            st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+        else:
+            fig = px.bar(
+                df_combined,
+                x='Sigla',
+                y='Med_Fam',
+                opacity=0.7,
+                labels={
+                    'Sigla': 'Estado',
+                    'Med_Fam': 'Número médio de famílias no Estado.'
+                }
+            )
+            
+            fig.update_traces(marker_color=colors)
+            
+            fig.add_trace(
+                go.Scatter(
+                    x=df_combined['Sigla'],
+                    y=df_combined[f'{selected_faixa}'],
+                    mode='lines+markers',
+                    name=f'{faixa}',
+                    line=dict(color='#FF4444', width=1, dash='dash'),
+                    marker=dict(size=4)
+                )
+            )
+            
+            fig.update_layout(
+                xaxis_tickangle=0,
+                legend_title_text='Legenda',
+                title={
+                    'text': panorama_titulo,
+                    'x': 0.5,
+                    'y': 0.95,
+                    'xanchor': 'center',
+                    'yanchor': 'top'
+                }
+            )
+        
+        return fig
+
+    # Plotagem de Gráfico (tab Panorama - média de famílias)
+    with st.container(border=True):
+        selected_panorama_year, panorama_selection, selected_aggregation, tipo_de_gráfico = panorama_layout()
+        df_combined = processar_dados(selected_panorama_year, selected_aggregation, selected_faixa, tipo_de_gráfico)
+        panorama_titulo = criar_chart_title(panorama_selection, faixa, selected_panorama_year)
+        
+        fig = Fig_panorama_chart(
+            df_combined,
+            selected_estado,
+            selected_faixa,
+            faixa,
+            panorama_titulo,
+            tipo_de_gráfico
+        )
+        
+        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+
+        #--------------------------------------------------------------------------------------------------------------------------------------------------------
+        # Plotagem de Gráfico (tab Panorama - Sazonalidade)
+        #--------------------------------------------------------------------------------------------------------------------------------------------------------
         
         with st.container(border=True):
 
@@ -739,7 +842,7 @@ with tab_estado:
                         with col_year:
                             anos_unicos = df_cadúnico_estado['Ano'].dropna().unique()
                             anos_unicos_ordenados = sorted(anos_unicos, reverse=True)
-                            selected_year = st.selectbox('Selecione o Ano:', anos_unicos_ordenados, index=0)
+                            selected_year = st.selectbox('Selecione o Ano:', anos_unicos_ordenados, index=0, key='year_selector')
                         
                         with col_faixa:
                             def mostrar_opcoes(list_faixa):
