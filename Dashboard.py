@@ -333,9 +333,9 @@ def Fig_trend_rank(df, selected_estado_, faixa_, metodo=True):
     posicao = resultados['Sigla'].tolist().index(selected_sigla) + 1
     total_estados = len(resultados)
 
-    titulo = (f"Inclinação da linha de tendência <b>{faixa_} por estado</b><br>2017/2023" 
+    titulo = (f"Inclinação da linha de tendência <b>{faixa_} por estado</b><br>2017/2024" 
             if metodo else 
-            f"Diferença percentual entre o último valor real e a linha de tendência <b>{faixa_} por estado</b><br>2017/2023")
+            f"Diferença percentual entre o último valor real e a linha de tendência <b>{faixa_} por estado</b><br>2017/2024")
 
     fig = px.bar(resultados, 
                 x='Sigla', 
