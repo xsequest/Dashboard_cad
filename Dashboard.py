@@ -135,7 +135,7 @@ def carrengando_informações_fam_unipessoais():
     df_combinado = df_combinado.iloc[:, [0, 1, 2, 3, 4, 7, 5, 6]]
         
     return df_combinado
-
+@st.cache_data
 def carregando_informações_media_familias_estado():
     df_populacao = sidrapy.get_table(table_code="4714", variable=93, territorial_level="3", ibge_territorial_code="all")
     df_populacao.columns = df_populacao.iloc[0]
