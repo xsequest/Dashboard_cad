@@ -987,7 +987,7 @@ with tab_estado:
                     # Personalizar o layout
                     fig_fam_uni_ind.update_layout(
                         title={
-                            'text': f'Número de Famílias Unipessoais Inscritas em {selected_estado}<br>(2023-2024) *Janela Procad',
+                            'text': f'Número de Famílias Unipessoais Inscritas no CadÚnico - Todas as faixas de renda<br>{selected_estado} - (2023-2024) *Janela Procad',
                             'x': 0.5,  # Centraliza o título
                             'xanchor': 'center',
                             'yanchor': 'top'
@@ -1062,7 +1062,7 @@ with tab_estado:
                     )
                     fig_fam_uni.update_layout(
                         title={
-                            'text': 'Famílias Inscritas em Goiás: <b>Total e Unipessoais</b><br>Todas as faixas de renda',
+                            'text': 'Famílias Inscritas no CadÚnico em Goiás: <b>Total e Unipessoais</b><br>Todas as faixas de renda',
                             'x': 0.5,
                             'y': 0.95,
                             'xanchor': 'center',
