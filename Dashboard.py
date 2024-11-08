@@ -7,9 +7,6 @@ from scipy import stats
 from plotly.subplots import make_subplots
 
                     
-
-
-
 st.set_page_config(page_title="Dashboard CadÚnico", page_icon=":bar_chart:", layout="wide")
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -167,7 +164,6 @@ def Fig_line_chart(df, selected_faixa_, faixa_, show_media=False):  # Adicione o
 
     fig_linha = px.line(df, x='Data', y=selected_faixa_, markers=False, labels={selected_faixa_: faixa_, 'Data': 'Data'})
     
-    # Adicionando a linha de média apenas se show_media for True
     if show_media:
         fig_linha.add_scatter(
             x=media_estados['Data'],
@@ -405,7 +401,6 @@ def Fig_trend_rank(df, selected_estado_, faixa_, metodo=True):
 
     selected_sigla = df.loc[df['Estado'] == selected_estado_, 'Sigla'].unique()[0] 
     posicao = resultados['Sigla'].tolist().index(selected_sigla) + 1
-    total_estados = len(resultados)
 
     titulo = (f"Inclinação da linha de tendência <b>{faixa_} por estado</b><br>2017/2024" 
             if metodo else 
@@ -466,7 +461,6 @@ def Fig_trend_rank(df, selected_estado_, faixa_, metodo=True):
     return fig
 #-------------------------------------------------------------------------------------------------------------------------------------
 def create_line_trace(x, y, name, color, y_formatted):
-    """Cria um trace de linha para o gráfico"""
     return go.Scatter(
         x=x,
         y=y,
@@ -483,7 +477,6 @@ def create_line_trace(x, y, name, color, y_formatted):
     )
 
 def create_graph_layout(title, y1_title=None, y2_title=None, y1_color='#84c784', y2_color='#00766f'):
-    """Cria o layout do gráfico"""
     layout = {
         'title': {
             'text': title,
@@ -519,7 +512,6 @@ def create_graph_layout(title, y1_title=None, y2_title=None, y1_color='#84c784',
     
     return layout
 def plot_single_graph(df, selected_year, selected_faixa, region_name, color):
-    """Plota gráfico com uma única linha"""
     df_selected = df.loc[df['Data'].dt.year == selected_year].copy()
     meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     meses_x = meses[:df_selected['Mês'].max()]
@@ -542,13 +534,13 @@ def plot_single_graph(df, selected_year, selected_faixa, region_name, color):
     ))
     
     return fig
+#-----------------------------------------------------------------------------------------------------------
 def plot_multi_graph(df, selected_year, selected_faixas, region_name):
     """Plota gráfico com múltiplas linhas"""
     df_selected = df.loc[df['Data'].dt.year == selected_year].copy()
     meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     meses_x = meses[:df_selected['Mês'].max()]
     
-    # Define as cores com base na região
     if region_name == 'Brasil':
         colors = ['#506e9a', '#41b8d5']
     else:
@@ -560,7 +552,6 @@ def plot_multi_graph(df, selected_year, selected_faixas, region_name):
     
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-    # Primeira linha
     fig.add_trace(
         create_line_trace(
             meses_x,
@@ -572,7 +563,6 @@ def plot_multi_graph(df, selected_year, selected_faixas, region_name):
         secondary_y=False
     )
     
-    # Segunda linha
     fig.add_trace(
         create_line_trace(
             meses_x,
@@ -678,7 +668,7 @@ with tab_panorama:
                 selected_aggregation = "Proporção"
             
         return selected_year, selected_view, selected_aggregation, tipo_de_gráfico
-
+    #----------------------------------------------------------------------------------------------------
     def processar_dados(selected_year, selected_aggregation, selected_faixa, tipo_de_gráfico):
         df_media_fam = carregando_informações_media_familias_estado()
         
@@ -696,11 +686,11 @@ with tab_panorama:
         if tipo_de_gráfico == 'Proporção':
             return df_combined.sort_values('diff', ascending=True)
         return df_combined.sort_values(selected_faixa, ascending=False)
-
+    #----------------------------------------------------------------------------------------------------
     def criar_chart_title(selected_view, faixa, selected_year):
         if selected_view == 'Média do ano':
-            return f"Média de famílias em <b>{faixa} por estado</b><br>{selected_year}"
-        return f"Famílias em <b>{faixa} por estado</b><br>Último mês de referência - {selected_year}"
+            return f"Média de famílias inscritas no CadÚnico em <b>{faixa} por estado</b><br>{selected_year}"
+        return f"Famílias inscritas no CadÚnico em <b>{faixa} por estado</b><br>Último mês de referência - {selected_year}"
 
     def Fig_panorama_chart(df_combined, selected_estado, selected_faixa, faixa, panorama_titulo, tipo_de_gráfico):
         selected_state_sigla = df_cadúnico.loc[df_cadúnico['Estado'] == selected_estado, 'Sigla'].unique()[0]
@@ -772,6 +762,7 @@ with tab_panorama:
         return fig
 
     # Plotagem de Gráfico (tab Panorama - média de famílias)
+    #===========================================================================================================================
     with st.container(border=True):
         with st.container(border=True):
             with st.container(border=True):
@@ -902,8 +893,6 @@ with tab_estado:
                     st.plotly_chart(Fig_line_chart(df_cadúnico_estado, selected_faixa, faixa, on_media), theme="streamlit", use_container_width=True)
                     
                     if on_media:
-                        #on_media_diff = st.toggle('Visualizar diferença percentual da média.')                        
-                        #if on_media_diff:
                         st.divider()
                         st.plotly_chart(Fig_media_rank(df_cadúnico, selected_estado ,selected_faixa, faixa), theme="streamlit", use_container_width=True)
 
@@ -929,7 +918,6 @@ with tab_estado:
                                 opcoes.append('Todas')
                                 return opcoes
                             
-                            # Verifica se selected_faixa já está na lista antes de criar o multiselect
                             default_values = ['Pobreza']
                             if faixa in list_faixa:
                                 default_values.insert(0, faixa)
@@ -944,7 +932,6 @@ with tab_estado:
                         st.text("Opção 'Todas' está em construção!")
                     else:
                         if len(selected_faixa_multi) == 1:
-                            # Plot para estado único
                             fig_estado = plot_single_graph(
                                 df_cadúnico_estado,
                                 selected_year,
@@ -956,7 +943,6 @@ with tab_estado:
                             
                             st.divider()
                             
-                            # Plot para Brasil único
                             fig_brasil = plot_single_graph(
                                 df_cadúnico_br,
                                 selected_year,
@@ -967,7 +953,6 @@ with tab_estado:
                             st.plotly_chart(fig_brasil, theme="streamlit", use_container_width=True)
                             
                         elif len(selected_faixa_multi) > 1:
-                            # Plot para estado múltiplo
                             fig_estado_multi = plot_multi_graph(
                                 df_cadúnico_estado,
                                 selected_year,
@@ -978,7 +963,6 @@ with tab_estado:
                             
                             st.divider()
                             
-                            # Plot para Brasil múltiplo
                             fig_brasil_multi = plot_multi_graph(
                                 df_cadúnico_br,
                                 selected_year,
@@ -994,7 +978,6 @@ with tab_estado:
                         growth_rate = round((df_growth.pct_change() * 100).dropna(), 2)
                         variacao_percentual = (df_growth.iloc[-1] / df_growth.iloc[0] - 1) * 100
 
-                        # Definindo as cores com base nos valores de growth_rate
                         colors = ['#87CEEB' if x < 0 else '#FF4444' for x in growth_rate]
 
                         fig_crescimento = px.bar(
@@ -1002,14 +985,12 @@ with tab_estado:
                             y=growth_rate,
                             labels={'x': 'Ano', 'y': 'Taxa de crescimento (%)'}, 
                             text=growth_rate.map(lambda x: f'{x:.2f}%'),
-                            color=growth_rate,  # Usando growth_rate para definir as cores
-                            color_discrete_sequence=None  # Removendo a sequência de cores discreta
+                            color=growth_rate,
+                            color_discrete_sequence=None
                         )
 
-                        # Atualizando as cores das barras
                         fig_crescimento.update_traces(marker_color=colors)
 
-                        # Adicionando a linha de variação percentual
                         fig_crescimento.add_hline(
                             y=variacao_percentual, 
                             line_dash="dash", 
@@ -1019,7 +1000,6 @@ with tab_estado:
                             annotation_position="top left"
                         )
 
-                        # Personalizando o layout
                         fig_crescimento.update_layout(
                             width=800, 
                             height=400,
@@ -1092,20 +1072,17 @@ with tab_estado:
                     df_selected_uni_ind = df_selected_uni.copy()
                     df_selected_uni_ind['Data'] = pd.to_datetime(df_selected_uni_ind['Data'])
 
-                    # Ordenar o dataframe por data
                     df_selected_uni_ind = df_selected_uni_ind.sort_values('Data')
 
-                    # Criar o gráfico base com a linha
                     fig_fam_uni_ind = px.line(df_selected_uni_ind, 
                                 x='Data', 
                                 y='fam_unipessoais_inscritas')
 
 
-                    # Personalizar o layout
                     fig_fam_uni_ind.update_layout(
                         title={
                             'text': f'Número de Famílias Unipessoais Inscritas no CadÚnico - Todas as faixas de renda<br>{selected_estado} - (2023-2024) *Janela Procad',
-                            'x': 0.5,  # Centraliza o título
+                            'x': 0.5,
                             'xanchor': 'center',
                             'yanchor': 'top'
                         },
@@ -1117,7 +1094,7 @@ with tab_estado:
                             gridcolor='lightgrey',
                             zeroline=True,
                             zerolinecolor='lightgrey',
-                            tickformat=','  # Formato com separador de milhares
+                            tickformat=','
                         ),
                         xaxis=dict(
                             showgrid=False,
@@ -1131,7 +1108,6 @@ with tab_estado:
                             x=0.01        
                         )
                     )
-                    # Atualizar a linha principal
                     fig_fam_uni_ind.update_traces(
                         line_color='#2ca02c',
                         selector=dict(mode='lines')
@@ -1149,7 +1125,6 @@ with tab_estado:
                     df_selected_uni['fam_inscritas'] = df_selected_uni['fam_inscritas'] / 1_000_000
                     df_selected_uni['fam_unipessoais_inscritas'] = df_selected_uni['fam_unipessoais_inscritas'] / 1_000_000
 
-                    # Criando o gráfico de barras
                     fig_fam_uni = px.bar(df_selected_uni, 
                                 x='Data', 
                                 y='fam_inscritas',
@@ -1157,7 +1132,6 @@ with tab_estado:
                                 labels={'Data': 'Data', 
                                         'fam_inscritas': 'Número de famílias inscritas (milhões)'})
 
-                    # Definir as cores das barras
                     fig_fam_uni.update_traces(marker_color='#87CEEB')
 
 
@@ -1172,7 +1146,6 @@ with tab_estado:
                         )
                     )
 
-                    # Atualizar o layout
                     fig_fam_uni.update_layout(
                         xaxis_tickangle=0,
                         legend_title_text='Legenda'
@@ -1189,7 +1162,6 @@ with tab_estado:
                         yaxis_title="Número de Famílias (milhões)"
                     )
 
-                    # Formatando os números no eixo y para o padrão brasileiro
                     fig_fam_uni.update_yaxes(
                         tickformat=",.",
                         separatethousands=True
@@ -1211,8 +1183,8 @@ with tab_estado:
                                 color_discrete_map={'Brasil': '#1f77b4', selected_estado: '#2ca02c'})
                     fig_desemprego.update_layout(
                         title={
-                            'text': f'Taxa de Desemprego<br>Brasil - {selected_estado}',  # Substitua pelo título desejado
-                            'x': 0.5,  # Centraliza o título
+                            'text': f'Taxa de Desemprego<br>Brasil - {selected_estado}',
+                            'x': 0.5,
                             'xanchor': 'center',
                             'yanchor': 'top'
                         },
@@ -1245,19 +1217,16 @@ with tab_estado:
                     datas_unicas = sorted(set(df_desemprego_estado['Data']) & set(df_desemprego_br['Data']))
                     df_diferenca = pd.DataFrame(index=datas_unicas)
 
-                    # Calcula a diferença percentual para as datas em comum
                     df_diferenca['Diferenca_Percentual'] = round(
                         ((df_desemprego_estado.set_index('Data').loc[datas_unicas, 'Valor'] / 
                         df_desemprego_br.set_index('Data').loc[datas_unicas, 'Valor']) - 1) * 100, 2
                     )
 
-                    # Extrai ano e mês a partir das datas
                     df_diferenca['Ano'] = pd.to_datetime(df_diferenca.index).year
                     df_diferenca['Mês'] = pd.to_datetime(df_diferenca.index).month
                     df_diferenca = df_diferenca.reset_index().rename(columns={'index': 'Data'})
                     df_diferenca = df_diferenca.sort_values('Data')
 
-                    # Cria o gráfico de linha com Plotly Express
                     fig_desemprego_diff = px.line(
                         df_diferenca, 
                         x='Data', 
@@ -1268,7 +1237,7 @@ with tab_estado:
                     fig_desemprego_diff.update_layout(
                         title={
                             'text': f'Diferença percentual Taxa de Desemprego<br>{selected_estado} - Brasil (2017-2024)',
-                            'x': 0.5,  # Centraliza o título
+                            'x': 0.5,
                             'xanchor': 'center',
                             'yanchor': 'top'
                         },
@@ -1294,11 +1263,9 @@ with tab_estado:
                         )
                     )
 
-                    # Atualiza a cor da linha do gráfico
                     fig_desemprego_diff.update_traces(
                         line_color='#2ca02c',
                         selector=dict(mode='lines')
                     )
 
-                    # Exibe o gráfico no Streamlit
                     st.plotly_chart(fig_desemprego_diff, theme="streamlit", use_container_width=True)
