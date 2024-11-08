@@ -959,10 +959,48 @@ with tab_estado:
                             }
                         )
 
-                        # Adicionando uma linha horizontal em y=0
                         fig_crescimento.add_hline(y=0, line_color='black')
                         fig_crescimento.update_traces(hovertemplate='Ano: <b>%{x}</b><br>Taxa de crescimento: <b>%{y:.2f}%</b><extra></extra>')
                         st.plotly_chart(fig_crescimento, theme="streamlit", use_container_width=True)
+                        
+                        #----------------------------------------------------------------------------------------------------------------------------------------
+                        st.divider()
+                        #----------------------------------------------------------------------------------------------------------------------------------------
+                        
+                        def df_pizza(_df, selected_v):
+                            df_pizza = _df.loc[_df['Ano'] == 2024].iloc[-1]
+                            
+                            cols = ['fam_ext_pob', 'fam_pob', 'fam_baixa_renda', 'fam_acima_meio_sm']
+                            data = [df_pizza[col] for col in cols]
+                            labels = [col.replace('_', ' ').title() for col in cols]
+
+                            #colors = ['#FFE101' if col == selected_v else '#2ca02c' for col in cols]
+                            
+                            pull_values = [0.1 if col == selected_v else 0 for col in cols]
+
+                            fig = go.Figure(data=[go.Pie(
+                                labels=labels,
+                                values=data,
+                                textinfo='label+percent',
+                                pull=pull_values,
+                                #marker=dict(colors=colors),
+                                showlegend=False
+                            )])
+                            
+                            fig.update_layout(
+                                title=dict(
+                                    text='Famílias Inscritas no CadÚnico por Faixa de Renda<br>Último mês de referência.',
+                                    font=dict(size=20),
+                                    x=0.5,
+                                    xanchor='center'
+                                ),
+                                font=dict(size=16),
+                                margin=dict(t=50, b=50, l=100, r=100)
+                            )
+                            
+                            return fig
+
+                        st.plotly_chart(df_pizza(df_cadúnico_estado, selected_v=selected_faixa), theme="streamlit", use_container_width=True)
         
         #===============================================================================================================================================
         with st.expander("Famílias Unipessoais Inscritas e Taxa de desocupação:"):
