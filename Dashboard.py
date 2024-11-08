@@ -221,6 +221,80 @@ def Fig_line_chart(df, selected_faixa_, faixa_, show_media=False):  # Adicione o
         }
     )
     return fig_linha
+#---------------------------------------------------------------------------------------------------------------------------------
+def Fig_media_rank(df, selected_estado_, selected_faixa_, faixa_):
+    media_estados = df.groupby('Data')[selected_faixa_].mean().reset_index()
+    
+    ultimos_valores = df.groupby('Sigla').agg({
+        selected_faixa_: 'last',
+        'Estado': 'first'
+    }).reset_index()
+    
+    ultima_media = media_estados[selected_faixa_].iloc[-1]
+    
+    ultimos_valores['Diferenca'] = ((ultimos_valores[selected_faixa_] - ultima_media) / ultima_media) * 100
+    
+    resultados = ultimos_valores.sort_values('Diferenca', ascending=True)
+    
+    selected_sigla = df.loc[df['Estado'] == selected_estado_, 'Sigla'].unique()[0]
+    
+    posicao = resultados['Sigla'].tolist().index(selected_sigla) + 1
+    
+    titulo = f"Diferença percentual entre o último mês de referência e a média dos estados<br><b>{faixa_}</b>"
+    
+    fig = px.bar(resultados,
+                 x='Sigla',
+                 y='Diferenca',
+                 opacity=0.7,
+                 labels={'Sigla': 'Estado',
+                        'Diferenca': 'Diferença da média (%)'})
+    
+    colors = ['green' if x == selected_sigla else '#87CEEB' for x in resultados['Sigla']]
+    fig.update_traces(marker_color=colors)
+    
+    fig.update_layout(
+        xaxis_tickangle=0,
+        legend_title_text='Legenda',
+        title={
+            'text': titulo,
+            'x': 0.5,
+            'y': 0.95,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        }
+    )
+    
+    y_value = resultados[resultados['Sigla'] == selected_sigla]['Diferenca'].values[0]
+    
+    if y_value >= 0:
+        ay = -40
+        yanchor = 'bottom'
+    else:
+        ay = 40
+        yanchor = 'top'
+    
+    fig.add_annotation(
+        x=selected_sigla,
+        y=y_value,
+        text=f"{posicao}º",
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1,
+        arrowwidth=2,
+        arrowcolor="#636363",
+        ax=0,
+        ay=ay,
+        yanchor=yanchor,
+        font=dict(size=12, color="white"),
+        bgcolor="green",
+        opacity=0.8,
+        bordercolor="green",
+        borderwidth=2,
+        borderpad=4,
+        align="center"
+    )
+    
+    return fig
 
 #---------------------------------------------------------------------------------------------------------------------------------
 def Fig_candle_chart(df_, selected_faixa_, faixa_, selected_estado_):
@@ -344,11 +418,9 @@ def Fig_trend_rank(df, selected_estado_, faixa_, metodo=True):
                 labels={'Sigla': 'Estado', 
                         'Tendência': 'Variação da tendência (%) ' if metodo else 'Diferença real vs tendência (%) '})
 
-    # Definir as cores das barras
     colors = ['green' if x == selected_sigla else '#87CEEB' for x in resultados['Sigla']]
     fig.update_traces(marker_color=colors)
 
-    # Atualizar o layout
     fig.update_layout(
         xaxis_tickangle=0,
         legend_title_text='Legenda',
@@ -361,15 +433,13 @@ def Fig_trend_rank(df, selected_estado_, faixa_, metodo=True):
         }
     )
 
-    # Obter o valor y para o estado selecionado
     y_value = resultados[resultados['Sigla'] == selected_sigla]['Tendência'].values[0]
 
-    # Ajustar a posição da anotação com base no valor de y
     if y_value >= 0:
-        ay = -40  # Anotação abaixo da barra para valores positivos
+        ay = -40  
         yanchor = 'bottom'
     else:
-        ay = 40  # Anotação acima da barra para valores negativos
+        ay = 40
         yanchor = 'top'
 
     fig.add_annotation(
@@ -625,7 +695,7 @@ with tab_panorama:
         
         if tipo_de_gráfico == 'Proporção':
             return df_combined.sort_values('diff', ascending=True)
-        return df_combined.sort_values('Med_Fam', ascending=False)
+        return df_combined.sort_values(selected_faixa, ascending=False)
 
     def criar_chart_title(selected_view, faixa, selected_year):
         if selected_view == 'Média do ano':
@@ -828,6 +898,13 @@ with tab_estado:
                 else: # Em linha
                     on_media = st.toggle('Mostrar média dos estados.')
                     st.plotly_chart(Fig_line_chart(df_cadúnico_estado, selected_faixa, faixa, on_media), theme="streamlit", use_container_width=True)
+                    
+                    if on_media:
+                        #on_media_diff = st.toggle('Visualizar diferença percentual da média.')                        
+                        #if on_media_diff:
+                        st.divider()
+                        st.plotly_chart(Fig_media_rank(df_cadúnico, selected_estado ,selected_faixa, faixa), theme="streamlit", use_container_width=True)
+
                 
 
         #------------------------------------------------------------------------------------------------------------------------------------
