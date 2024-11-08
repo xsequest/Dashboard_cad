@@ -773,20 +773,22 @@ with tab_panorama:
 
     # Plotagem de Gráfico (tab Panorama - média de famílias)
     with st.container(border=True):
-        selected_panorama_year, panorama_selection, selected_aggregation, tipo_de_gráfico = panorama_layout()
-        df_combined = processar_dados(selected_panorama_year, selected_aggregation, selected_faixa, tipo_de_gráfico)
-        panorama_titulo = criar_chart_title(panorama_selection, faixa, selected_panorama_year)
-        
-        fig = Fig_panorama_chart(
-            df_combined,
-            selected_estado,
-            selected_faixa,
-            faixa,
-            panorama_titulo,
-            tipo_de_gráfico
-        )
-        
-        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+        with st.container(border=True):
+            with st.container(border=True):
+                selected_panorama_year, panorama_selection, selected_aggregation, tipo_de_gráfico = panorama_layout()
+                df_combined = processar_dados(selected_panorama_year, selected_aggregation, selected_faixa, tipo_de_gráfico)
+                panorama_titulo = criar_chart_title(panorama_selection, faixa, selected_panorama_year)
+                
+                fig = Fig_panorama_chart(
+                    df_combined,
+                    selected_estado,
+                    selected_faixa,
+                    faixa,
+                    panorama_titulo,
+                    tipo_de_gráfico
+                )
+
+            st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
         #--------------------------------------------------------------------------------------------------------------------------------------------------------
         # Plotagem de Gráfico (tab Panorama - Sazonalidade)
@@ -896,7 +898,7 @@ with tab_estado:
                     st.plotly_chart(fig_rank_tendencia, theme="streamlit", use_container_width=True)
 
                 else: # Em linha
-                    on_media = st.toggle('Mostrar média dos estados.')
+                    on_media = st.toggle('Mostrar média de todos os estados.')
                     st.plotly_chart(Fig_line_chart(df_cadúnico_estado, selected_faixa, faixa, on_media), theme="streamlit", use_container_width=True)
                     
                     if on_media:
@@ -1066,7 +1068,7 @@ with tab_estado:
                             
                             fig.update_layout(
                                 title=dict(
-                                    text='Famílias Inscritas no CadÚnico por Faixa de Renda<br>Último mês de referência.',
+                                    text=f'Famílias Inscritas no CadÚnico por Faixa de Renda - {selected_estado}<br>Último mês de referência.',
                                     font=dict(size=20),
                                     x=0.5,
                                     xanchor='center'
