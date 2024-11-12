@@ -952,7 +952,7 @@ with tab_estado:
                     st.plotly_chart(fig_rank_tendencia, theme="streamlit", use_container_width=True)
 
                 else: # Em linha
-                    on_media = st.toggle('Mostrar média de todos os estados.')
+                    on_media = st.toggle('Mostrar média dos estados.')
                     st.plotly_chart(Fig_line_chart(df_cadúnico_estado, selected_faixa, faixa, on_media), theme="streamlit", use_container_width=True)
                     
                     if on_media:
@@ -1358,7 +1358,7 @@ with tab_estado:
                     df_diferenca = df_diferenca.reset_index().rename(columns={'index': 'Data'})
                     df_diferenca = df_diferenca.sort_values('Data')
 
-                    fig_desemprego_diff = px.line(
+                    fig_desemprego_diff = px.area(
                         df_diferenca, 
                         x='Data', 
                         y='Diferenca_Percentual',
@@ -1395,7 +1395,9 @@ with tab_estado:
                     )
 
                     fig_desemprego_diff.update_traces(
-                        line_color='#2ca02c',                        
+                        line_color= '#2ca02c',
+                        fillcolor='#d7f4d7', 
+                        opacity= 0.5,                                               
                         selector=dict(mode='lines')
                     )
 
