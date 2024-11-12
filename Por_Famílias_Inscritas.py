@@ -1037,7 +1037,7 @@ with tab_estado:
                 #=========================================================================================================================================       
                 with col_crescimento:
                     with st.container(border=True):
-                        selected_variação = st.radio('Selecionar por:', ['Ano', 'Mês'], horizontal=True, key='variação')
+                        selected_variação = st.radio('Variação percentual por:', ['Ano', 'Mês'], horizontal=True, key='variação')
                         if selected_variação == 'Mês':
                             def get_pct_change(df):
                                 columns_to_change = ['fam_ext_pob', 'fam_pob', 'fam_baixa_renda', 'fam_acima_meio_sm']
@@ -1395,7 +1395,7 @@ with tab_estado:
                     )
 
                     fig_desemprego_diff.update_traces(
-                        line_color='#2ca02c',
+                        line_color='#2ca02c',                        
                         selector=dict(mode='lines')
                     )
 
