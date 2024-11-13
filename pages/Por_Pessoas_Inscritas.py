@@ -137,7 +137,7 @@ def carregando_informações_população_estado():
 
 def Fig_line_chart(df, selected_faixa_, faixa_, show_media=False):
     media_estados = df_cadúnico.groupby('Data')[selected_faixa_].mean().reset_index()
-    meses_anuais = df[df['Data'].dt.month == 12]['Data']
+    meses_anuais = df[df['Data'].dt.month == 1]['Data']
     ultimo_valor = df[selected_faixa_].iloc[-1]
     ultima_data = df['Data'].iloc[-1]
 
@@ -185,7 +185,12 @@ def Fig_line_chart(df, selected_faixa_, faixa_, show_media=False):
     fig_linha.update_layout(
         xaxis_title=None,
         yaxis_title='Número de Pessoas Inscritas',
-        xaxis=dict(tickmode='array', tickvals=meses_anuais),
+        xaxis=dict(
+            tickmode='array', 
+            tickvals=meses_anuais,
+            tickformat='%Y-%m',  # Formato YYYYmm
+            dtick='M1'  # Intervalo mensal
+        ),
         yaxis=dict(gridcolor='lightgrey'),
         title={
             'text': f'Pessoas inscritas no CadÚnico em {faixa_} (2017-2023)<br>{selected_estado}',
@@ -196,7 +201,95 @@ def Fig_line_chart(df, selected_faixa_, faixa_, show_media=False):
         }
     )
     return fig_linha
-
+#---------------------------------------------------------------------------------------------------------------------------------
+def Fig_multi_line_chart(df, selected_faixa_, faixa_, selected_estado_):
+    meses_anuais = df[df['Data'].dt.month == 1]['Data']
+    ultimo_valor = df[selected_faixa_].iloc[-1]
+    ultima_data = df['Data'].iloc[-1]
+    
+    faixas = {
+        'pes_ext_pob': {'cor': 'gray', 'nome': 'Extrema Pobreza'},
+        'pes_pob': {'cor': 'gray', 'nome': 'Pobreza'},
+        'pes_baixa_renda': {'cor': 'gray', 'nome': 'Baixa Renda'},
+        'pes_acima_meio_sm': {'cor': 'gray', 'nome': 'Acima de meio SM'}
+    }
+    
+    fig_linha = go.Figure()
+    
+    for faixa, info in faixas.items():
+        if faixa == selected_faixa_:
+            linha_estilo = dict(color='green', dash='solid', width=2)
+        else:
+            linha_estilo = dict(color='gray', dash='dash', width=1)
+            
+        fig_linha.add_trace(
+            go.Scatter(
+                x=df['Data'],
+                y=df[faixa],
+                name=info['nome'],
+                line=linha_estilo,
+                mode='lines'
+            )
+        )
+        
+        if faixa == selected_faixa_:
+            fig_linha.add_trace(
+                go.Scatter(
+                    x=meses_anuais,
+                    y=df[df['Data'].isin(meses_anuais)][faixa],
+                    mode='markers',
+                    marker=dict(size=8, color="white", line=dict(width=2, color="green")),
+                    showlegend=False
+                )
+            )
+            
+            for data in meses_anuais:
+                valor = df[df['Data'] == data][faixa].values[0]
+                fig_linha.add_annotation(
+                    x=data,
+                    y=valor,
+                    text=format_number_br(valor),
+                    showarrow=False,
+                    yshift=10,
+                    font=dict(size=12)
+                )
+            
+            fig_linha.add_annotation(
+                x=ultima_data,
+                y=ultimo_valor,
+                text=format_number_br(ultimo_valor),
+                showarrow=False,
+                yshift=10,
+                font=dict(size=12)
+            )
+    
+    fig_linha.update_layout(
+        xaxis_title=None,
+        yaxis_title='Número de pessoas inscritas',
+        xaxis=dict(
+            tickmode='array', 
+            tickvals=meses_anuais,
+            tickformat='%Y-%m',
+            dtick='M1'
+        ),
+        yaxis=dict(gridcolor='lightgrey'),
+        title={
+            'text': f'Pessoas inscritas no CadÚnico em {faixa_} (2017-2023)<br>{selected_estado_}',
+            'x': 0.5,
+            'y': 0.95,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    return fig_linha
 #---------------------------------------------------------------------------------------------------------------------------------
 def Fig_media_rank(df, selected_estado_, selected_faixa_, faixa_):
     media_estados = df.groupby('Data')[selected_faixa_].mean().reset_index()
@@ -271,6 +364,8 @@ def Fig_media_rank(df, selected_estado_, selected_faixa_, faixa_):
     )
     
     return fig
+
+
 
 #---------------------------------------------------------------------------------------------------------------------------------
 def Fig_candle_chart(df_, selected_faixa_, faixa_, selected_estado_):
@@ -455,7 +550,7 @@ def create_line_trace(x, y, name, color, y_formatted):
             line=dict(color=color, width=2)
         )
     )
-
+#-------------------------------------------------------------------------------------------------------------------------------------
 def create_graph_layout(title, y1_title=None, y2_title=None, y1_color='#84c784', y2_color='#00766f'):
     layout = {
         'title': {
@@ -491,6 +586,7 @@ def create_graph_layout(title, y1_title=None, y2_title=None, y1_color='#84c784',
         )
     
     return layout
+#----------------------------------------------------------------------------------------------------------------
 def plot_single_graph(df, selected_year, selected_faixa, region_name, color):
     df_selected = df.loc[df['Data'].dt.year == selected_year].copy()
     meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -514,7 +610,7 @@ def plot_single_graph(df, selected_year, selected_faixa, region_name, color):
     ))
     
     return fig
-#-----------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
 def plot_multi_graph(df, selected_year, selected_faixas, region_name):
     """Plota gráfico com múltiplas linhas"""
     df_selected = df.loc[df['Data'].dt.year == selected_year].copy()
@@ -853,7 +949,12 @@ with tab_estado:
         with st.container(border=True):
             
             with st.expander("Opções de Plotagem:"):
-                selected_graph = st.radio("Selecione o tipo de gráfico para a visualização:", ['Linha','Candle', 'Tendência'], index=0)
+                col_options, col_multi_plot = st.columns(2)
+                with col_options:
+                    selected_graph = st.radio("Selecione o tipo de gráfico para a visualização:", ['Linha','Candle', 'Tendência'], index=0)
+                if selected_graph == 'Linha':
+                    with col_multi_plot:
+                        selected_multi_graph = st.radio("Opções do gráfico em linha:", ['Faixa de renda selecionada','Todas as faixas de renda'], index=0, key='multi_graph')
            
             with st.container(border=True):
                 if selected_graph == 'Candle':                   
@@ -868,12 +969,15 @@ with tab_estado:
                     st.plotly_chart(fig_rank_tendencia, theme="streamlit", use_container_width=True)
 
                 else: # Em linha
-                    on_media = st.toggle('Mostrar média de todos os estados.')
-                    st.plotly_chart(Fig_line_chart(df_cadúnico_estado, selected_faixa, faixa, on_media), theme="streamlit", use_container_width=True)
-                    
-                    if on_media:
-                        st.divider()
-                        st.plotly_chart(Fig_media_rank(df_cadúnico, selected_estado ,selected_faixa, faixa), theme="streamlit", use_container_width=True)
+                    if selected_multi_graph == 'Todas as faixas de renda':
+                        st.plotly_chart(Fig_multi_line_chart(df_cadúnico_estado, selected_faixa, faixa, selected_estado), theme="streamlit", use_container_width=True)
+                    else:
+                        on_media = st.toggle('Mostrar média dos estados.')
+                        st.plotly_chart(Fig_line_chart(df_cadúnico_estado, selected_faixa, faixa, on_media), theme="streamlit", use_container_width=True)
+                        
+                        if on_media:
+                            st.divider()
+                            st.plotly_chart(Fig_media_rank(df_cadúnico, selected_estado ,selected_faixa, faixa), theme="streamlit", use_container_width=True)
 
         #------------------------------------------------------------------------------------------------------------------------------------
          
@@ -948,55 +1052,121 @@ with tab_estado:
                             )
                             st.plotly_chart(fig_brasil_multi, theme="streamlit", use_container_width=True)
                 #=========================================================================================================================================       
-            with col_crescimento:
-                with st.container(border=True):
-                    df_growth = df_cadúnico_estado.groupby('Ano')[selected_faixa].last()
-                    growth_rate = round((df_growth.pct_change() * 100).dropna(), 2)
-                    variacao_percentual = (df_growth.iloc[-1] / df_growth.iloc[0] - 1) * 100
+                with col_crescimento:
+                    with st.container(border=True):
+                        selected_variação = st.radio('Variação percentual por:', ['Ano', 'Mês'], horizontal=True, key='variação')
+                        if selected_variação == 'Mês':
+                            def get_pct_change(df):
+                                columns_to_change = ['pes_ext_pob', 'pes_pob', 'pes_baixa_renda', 'pes_acima_meio_sm']
 
-                    colors = ['#87CEEB' if x < 0 else '#FF4444' for x in growth_rate]
+                                df_pct_change = round(df[columns_to_change].pct_change() *100, 2)
+                                df_pct_change = df_pct_change.fillna(0)
 
-                    fig_crescimento = px.bar(
-                        x=growth_rate.index, 
-                        y=growth_rate,
-                        labels={'x': 'Ano', 'y': 'Taxa de crescimento (%)'}, 
-                        text=growth_rate.map(lambda x: f'{x:.2f}%'),
-                        color=growth_rate,
-                        color_discrete_sequence=None
-                    )
+                                new_column_names = {col: f'{col}_pct_change' for col in columns_to_change}
+                                df_pct_change = df_pct_change.rename(columns=new_column_names)
 
-                    fig_crescimento.update_traces(marker_color=colors)
+                                df_result = pd.concat([df, df_pct_change], axis=1)
+                                df_result = df_result.reset_index(drop=True)
 
-                    fig_crescimento.add_hline(
-                        y=variacao_percentual, 
-                        line_dash="dash", 
-                        line_color="green",
-                        line_width=1, 
-                        annotation_text=f'Variação 2017-2023:<br>{variacao_percentual:.2f}%</b>', 
-                        annotation_position="top left"
-                    )
+                                df_result = df_result.iloc[:, [1, 2, 3, 10, 11, 12, 13]]
 
-                    fig_crescimento.update_layout(
-                        width=800, 
-                        height=400,
-                        xaxis_title=None,
-                        yaxis_title='Taxa de crescimento (%)',
-                        showlegend=False,
-                        plot_bgcolor='white'
-                    )
-                    fig_crescimento.update_layout(
-                        title={
-                            'text': f'Taxa de crescimento anual de Pessoas inscritas em <b>{faixa}</b><br>- <b>{selected_estado}</b> -',
-                            'x': 0.5,
-                            'y': 0.9,
-                            'xanchor': 'center',
-                            'yanchor': 'top'
-                        }
-                    )
+                                return df_result
 
-                    fig_crescimento.add_hline(y=0, line_color='black')
-                    fig_crescimento.update_traces(hovertemplate='Ano: <b>%{x}</b><br>Taxa de crescimento: <b>%{y:.2f}%</b><extra></extra>')
-                    st.plotly_chart(fig_crescimento, theme="streamlit", use_container_width=True)
+                            def to_plot(df, selected_estado_, selected_faixa_, faixa_):
+                                df_to_plot = get_pct_change(df)
+                                fig_diff = px.area(
+                                    df_to_plot, 
+                                    x='Data', 
+                                    y=f'{selected_faixa_}_pct_change'
+                                )
+
+                                fig_diff.update_layout(
+                                    title={
+                                        'text': f'Variação percentual mensal<br>{faixa_} - {selected_estado_}',
+                                        'x': 0.5,
+                                        'xanchor': 'center',
+                                        'yanchor': 'top'
+                                    },
+                                    title_font_size=20,
+                                    yaxis_title="Diferença Percentual (%)",
+                                    plot_bgcolor='white',
+                                    yaxis=dict(
+                                        gridcolor='lightgrey',
+                                        zeroline=True,
+                                        zerolinecolor='lightgrey'
+                                    ),
+                                    xaxis=dict(
+                                        showgrid=False,
+                                        tickangle=0
+                                    ),
+                                    legend_title="Ano",
+                                    legend=dict(
+                                        yanchor="top",
+                                        y=0.99,
+                                        xanchor="left",
+                                        x=0.01        
+                                    )
+                                )
+
+                                fig_diff.update_traces(
+                                    line_color='grey',
+                                    fillcolor='#87CEEB',
+                                    opacity=0.4,
+                                    line=dict(width=1),
+                                    selector=dict(type='scatter')
+                                )
+                                
+                                return fig_diff
+
+                            st.plotly_chart(to_plot(df_cadúnico_estado, selected_estado, selected_faixa, faixa), theme="streamlit", use_container_width=True)
+                        else:
+                            df_growth = df_cadúnico_estado.groupby('Ano')[selected_faixa].last()
+                            growth_rate = round((df_growth.pct_change() * 100).dropna(), 2)
+                            variacao_percentual = (df_growth.iloc[-1] / df_growth.iloc[0] - 1) * 100
+
+                            colors = ['green' if x < 0 else '#FF4444' for x in growth_rate] #87CEEB #FF4444
+
+                            fig_crescimento = px.bar(
+                                x=growth_rate.index, 
+                                y=growth_rate,
+                                labels={'x': 'Ano', 'y': 'Taxa de crescimento (%)'}, 
+                                text=growth_rate.map(lambda x: f'{x:.2f}%'),
+                                color=growth_rate,
+                                color_discrete_sequence=None, opacity=0.8
+                            )
+
+                            fig_crescimento.update_traces(marker_color=colors)
+
+                            fig_crescimento.add_hline(
+                                y=variacao_percentual, 
+                                line_dash="dash", 
+                                line_color="green",
+                                line_width=1, 
+                                annotation_text=f'Variação 2017-2023:<br>{variacao_percentual:.2f}%</b>', 
+                                annotation_position="top left"
+                            )
+
+                            fig_crescimento.update_layout(
+                                width=800, 
+                                height=400,
+                                xaxis_title=None,
+                                yaxis_title='Taxa de crescimento (%)',
+                                showlegend=False,
+                                plot_bgcolor='white'
+                            )
+                            fig_crescimento.update_layout(
+                                title={
+                                    'text': f'Taxa de crescimento anual de pessoas inscritas em <b>{faixa}</b><br>- <b>{selected_estado}</b> -',
+                                    'x': 0.5,
+                                    'y': 0.9,
+                                    'xanchor': 'center',
+                                    'yanchor': 'top'
+                                }
+                            )
+
+                            fig_crescimento.add_hline(y=0, line_color='black')
+                            fig_crescimento.update_traces(hovertemplate='Ano: <b>%{x}</b><br>Taxa de crescimento: <b>%{y:.2f}%</b><extra></extra>')
+                            st.plotly_chart(fig_crescimento, theme="streamlit", use_container_width=True)
 
                     #----------------------------------------------------------------------------------------------------------------------------------------
                     st.divider()
@@ -1206,7 +1376,7 @@ with tab_estado:
                     df_diferenca = df_diferenca.reset_index().rename(columns={'index': 'Data'})
                     df_diferenca = df_diferenca.sort_values('Data')
 
-                    fig_desemprego_diff = px.line(
+                    fig_desemprego_diff = px.area(
                         df_diferenca, 
                         x='Data', 
                         y='Diferenca_Percentual',
@@ -1243,7 +1413,9 @@ with tab_estado:
                     )
 
                     fig_desemprego_diff.update_traces(
-                        line_color='#2ca02c',
+                        line_color= '#2ca02c',
+                        fillcolor='#d7f4d7', 
+                        opacity= 0.5,                                               
                         selector=dict(mode='lines')
                     )
 
