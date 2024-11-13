@@ -879,7 +879,7 @@ with tab_panorama:
             )
             fig_sazonalidade.update_layout(
                 title={
-                    'text': f'Sazonalidade: Média mensal de Pessoas Inscritas em {faixa} (2017-2024)<br>Brasil',
+                    'text': f'Sazonalidade: Média mensal de Pessoas Inscritas em {faixa} (2017-2023)<br>Brasil',
                     'x': 0.5,
                     'y': 0.95,
                     'xanchor': 'center',
