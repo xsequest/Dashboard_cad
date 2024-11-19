@@ -208,10 +208,10 @@ def Fig_multi_line_chart(df, selected_faixa_, faixa_, selected_estado_):
     ultima_data = df['Data'].iloc[-1]
     
     faixas = {
-        'pes_ext_pob': {'cor': 'gray', 'nome': 'Extrema Pobreza'},
-        'pes_pob': {'cor': 'gray', 'nome': 'Pobreza'},
-        'pes_baixa_renda': {'cor': 'gray', 'nome': 'Baixa Renda'},
-        'pes_acima_meio_sm': {'cor': 'gray', 'nome': 'Acima de meio SM'}
+        'pes_ext_pob': {'cor': '#a55462', 'nome': 'Extrema Pobreza'},
+        'pes_pob': {'cor': '#a55462', 'nome': 'Pobreza'},
+        'pes_baixa_renda': {'cor': '#a55462', 'nome': 'Baixa Renda'},
+        'pes_acima_meio_sm': {'cor': '#a55462', 'nome': 'Acima de meio SM'}
     }
     
     fig_linha = go.Figure()
@@ -220,7 +220,7 @@ def Fig_multi_line_chart(df, selected_faixa_, faixa_, selected_estado_):
         if faixa == selected_faixa_:
             linha_estilo = dict(color='green', dash='solid', width=2)
         else:
-            linha_estilo = dict(color='gray', dash='dash', width=1)
+            linha_estilo = dict(color='#a55462', dash='dash', width=1)
             
         fig_linha.add_trace(
             go.Scatter(
