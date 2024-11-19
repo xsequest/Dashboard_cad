@@ -886,7 +886,7 @@ with tab_panorama:
 
             fig_sazonalidade = px.line(df_seasonal, x='Mês_nome', y=selected_faixa, markers=True, labels={selected_faixa: faixa, 'Mês_nome': 'Mês'})
 
-            fig_sazonalidade.update_traces(line_color='green', marker=dict(size=8, color="white", line=dict(width=2, color="green")))
+            fig_sazonalidade.update_traces(line_color='#41b8d5', marker=dict(size=8, color="white", line=dict(width=2, color="#41b8d5")))
 
             fig_sazonalidade.update_layout(
                 xaxis_title='Mês',
