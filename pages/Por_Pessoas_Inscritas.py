@@ -1271,8 +1271,8 @@ with tab_estado:
                     st.divider()
                     #-------------------------------------------------------------------------------------------------------
 
-                    df_selected_uni['fam_inscritas'] = round(df_selected_uni['fam_inscritas'] / 10**6, 3)
-                    df_selected_uni['fam_unipessoais_inscritas'] = round(df_selected_uni['fam_unipessoais_inscritas'] / 10**6, 3)
+                    df_selected_uni['fam_inscritas'] = df_selected_uni['fam_inscritas'] / 10**6
+                    df_selected_uni['fam_unipessoais_inscritas'] = df_selected_uni['fam_unipessoais_inscritas'] / 10**6
 
                     fig_fam_uni = px.bar(df_selected_uni, 
                                 x='Data', 
