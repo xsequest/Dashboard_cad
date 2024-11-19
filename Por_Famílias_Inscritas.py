@@ -232,7 +232,7 @@ def Fig_multi_line_chart(df, selected_faixa_, faixa_, selected_estado_):
     
     faixas = {
         'fam_ext_pob': {'cor': '#a55462', 'nome': 'Extrema Pobreza'},
-        'fam_pob': {'cor': 'gray', '#a55462': 'Pobreza'},
+        'fam_pob': {'cor': '#a55462', 'nome': 'Pobreza'},
         'fam_baixa_renda': {'cor': '#a55462', 'nome': 'Baixa Renda'},
         'fam_acima_meio_sm': {'cor': '#a55462', 'nome': 'Acima de meio SM'}
     }
@@ -886,7 +886,7 @@ with tab_panorama:
 
             fig_sazonalidade = px.line(df_seasonal, x='Mês_nome', y=selected_faixa, markers=True, labels={selected_faixa: faixa, 'Mês_nome': 'Mês'})
 
-            fig_sazonalidade.update_traces(line_color='#41b8d5', marker=dict(size=8, color="white", line=dict(width=2, color="#41b8d5")))
+            fig_sazonalidade.update_traces(line_color='#41b8d5', marker=dict(size=8, color="white", line=dict(width=2, color="#41b8d5")))   #'#506e9a', '#41b8d5'
 
             fig_sazonalidade.update_layout(
                 xaxis_title='Mês',
