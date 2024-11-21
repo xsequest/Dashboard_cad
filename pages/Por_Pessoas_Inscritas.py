@@ -220,7 +220,7 @@ def Fig_multi_line_chart(df, selected_faixa_, faixa_, selected_estado_):
         if faixa == selected_faixa_:
             linha_estilo = dict(color='green', dash='solid', width=2)
         else:
-            linha_estilo = dict(color='#a55462', dash='dash', width=1)
+            linha_estilo = dict(dash='dash', width=1)
             
         fig_linha.add_trace(
             go.Scatter(
