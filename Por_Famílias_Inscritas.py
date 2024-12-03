@@ -1081,7 +1081,7 @@ with tab_estado:
                 #=========================================================================================================================================       
                 with col_crescimento:
                     with st.container(border=True):
-                        selected_variação = st.radio('Variação percentual por:', ['Ano', 'Mês'], horizontal=True, key='variação')
+                        selected_variação = st.segmented_control('Variação percentual por:', ['Ano', 'Mês'], default= 'Ano', selection_mode="single", key='variação')
                         if selected_variação == 'Mês':
                             def get_pct_change(df):
                                 columns_to_change = ['fam_ext_pob', 'fam_pob', 'fam_baixa_renda', 'fam_acima_meio_sm']
