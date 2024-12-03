@@ -99,7 +99,10 @@ def carrengando_informações_fam_unipessoais():
     df_fam.columns = ['Cod_Estado_Ibge', 'Estado', 'Sigla', 'Data', 'fam_inscritas', 'Ano', 'Mês']
     df_fam = df_fam.sort_values(['Estado', 'Data'])
 
-    url_uni = 'https://aplicacoes.cidadania.gov.br/vis/data3/v.php?q[]=oNOclsLerpibuKep3bV%2BgW9g05Kv2rmg2a19ZW51ZmymaX6JaV2JlWCadWCNrMmlsKyamembs61ojMfGpt2slLysiJqdtKiftJ%2BuuqqSkpyZy6mmwraIp7G1WKvtnbKtp4%2B9wGPJrZjQ7ryVm3lwoNqlwLNyk7jNps94bsPcuaehg3Ct7qZwyViQxsKfz7CWwqONpbCsmpnpm7OtZ4zHxqbdrJS8rHlkZWhgWtyorrqcoLrGU5J9pNHfspOsqpuZqpi9s6qgxsKSm2ZU2razlai7mnXfmrnBnGiSx5TWsJiYtsCpqcSGr9qnwbebjrvGU86iU8PcuvfptJ6b7FmPk4Vynap2swC0r8SOh1yspFrJq7y1qY7EwlOsrJ%2FQ3G16nbX45%2BWirm6dnMnOlM6epn3rvKZceVWj562ytamOxdWYimWoy%2BS9ma%2B7pJvirHZxiKK4z6fToZTB4G2YoWibm%2Bb8%2BrqgjsqBgS3Agn3dsqKhrp6d4vzuwKCOyoGX2V2Dz%2Bq0pp21llq7qLnBmE2dwqAt6p%2FG3G2aq7qim92awG6nnMmBZIqmodHgtKadtqmfmWHCvKCdvNSm2Z6c0KRwhbGpo67ina6ynE3L0KfLqVPB4G2anbX45%2BWirsFXk8bToMuhlNCbvaOuaGZa4qfBs56fuM%2Bnz11b0um2pKG7qKnaosB3s52S3a%2FmeA%3D%3D&ma=mes&ma=mes&dt1=2023-02-01&dt2=2024-08-01&dt1=2022-12-01&dt2=2024-08-01&ag=e&wt=json&tp_funcao_consulta=0&draw=2&columns[0][data]=0&columns[0][name]=codigo&columns[0][searchable]=true&columns[0][orderable]=true&columns[0][search][value]=&columns[0][search][regex]=false&columns[1][data]=1&columns[1][name]=nome&columns[1][searchable]=true&columns[1][orderable]=false&columns[1][search][value]=&columns[1][search][regex]=false&columns[2][data]=2&columns[2][name]=mes_ano_formatado&columns[2][searchable]=true&columns[2][orderable]=true&columns[2][search][value]=&columns[2][search][regex]=false&columns[3][data]=3&columns[3][name]=qtde_pbf_1_pessoa_1&columns[3][searchable]=true&columns[3][orderable]=false&columns[3][search][value]=&columns[3][search][regex]=false&columns[4][data]=4&columns[4][name]=qtde_pbf_0_pessoa_1&columns[4][searchable]=true&columns[4][orderable]=false&columns[4][search][value]=&columns[4][search][regex]=false&columns[5][data]=5&columns[5][name]=(coalesce(t.qtde_pbf_0_pessoa_1%2C0)%20%2B%20coalesce%20(t.qtde_pbf_1_pes&columns[5][searchable]=true&columns[5][orderable]=false&columns[5][search][value]=&columns[5][search][regex]=false&order[0][column]=2&order[0][dir]=asc&order[1][column]=0&order[1][dir]=asc&start=0&length=3147483647&search[value]=&search[regex]=false&export=1&export_data_comma=1&export_tipo=csv&'
+    # VisData -> Famílias unipessoais beneficiárias e não beneficiárias do Programa Bolsa Família inscritas no Cadastro Único
+    url_base = 'https://aplicacoes.cidadania.gov.br/vis/data3/v.php?q[]=oNOclsLerpibuKep3bV%2BgW9g05Kv2rmg2a19ZW51ZmymaX6JaV2JlWCbbWCNrMmlsKyamembs61ojMfGpt2slLysiJqdtKiftJ%2BuuqqSkpyZy6mmwraIp7G1WKvtnbKtp4%2B9wGPJrZjQ7ryVm3lwoNqlwLNyk7jNps94bsPcuaehg3Ct7qZwyViQxsKfz7CWwqONpbCsmpnpm7OtZ4zHxqbdrJS8rHlkZWhgWtyorrqcoLrGU5J9pNHfspOsqpuZqpi9s6qgxsKSm2ZU2razlai7mnXfmrnBnGiSx5TWsJiYtsCpqcSGr9qnwbebjrvGU86iU8PcuvfptJ6b7FmPk4Vynap2swC0r8SOh1yspFrJq7y1qY7EwlOsrJ%2FQ3G16nbX45%2BWirm6dnMnOlM6epn3rvKZceVWj562ytamOxdWYimWoy%2BS9ma%2B7pJvirHZxiKK4z6fToZTB4G2YoWibm%2Bb8%2BrqgjsqBgS3Agn3dsqKhrp6d4vzuwKCOyoGX2V2Dz%2Bq0pp21llq7qLnBmE2dwqAt6p%2FG3G2aq7qim92awG6nnMmBZIqmodHgtKadtqmfmWHCvKCdvNSm2Z6c0KRwhbGpo67ina6ynE3L0KfLqVPB4G2anbX45%2BWirsFXk8bToMuhlNCbvaOuaGZa4qfBs56fuM%2Bnz11b0um2pKG7qKnaosB3s52S3a%2FmeA%3D%3D'
+    url_data = '&ma=mes&ma=mes&dt1=2022-12-01&dt2=2024-10-01'
+    url_uni = f'{url_base}{url_data}&ag=e&wt=json&tp_funcao_consulta=0&draw=2&columns[0][data]=0&columns[0][name]=codigo&columns[0][searchable]=true&columns[0][orderable]=true&columns[0][search][value]=&columns[0][search][regex]=false&columns[1][data]=1&columns[1][name]=nome&columns[1][searchable]=true&columns[1][orderable]=false&columns[1][search][value]=&columns[1][search][regex]=false&columns[2][data]=2&columns[2][name]=mes_ano_formatado&columns[2][searchable]=true&columns[2][orderable]=true&columns[2][search][value]=&columns[2][search][regex]=false&columns[3][data]=3&columns[3][name]=qtde_pbf_1_pessoa_1&columns[3][searchable]=true&columns[3][orderable]=false&columns[3][search][value]=&columns[3][search][regex]=false&columns[4][data]=4&columns[4][name]=qtde_pbf_0_pessoa_1&columns[4][searchable]=true&columns[4][orderable]=false&columns[4][search][value]=&columns[4][search][regex]=false&columns[5][data]=5&columns[5][name]=(coalesce(t.qtde_pbf_0_pessoa_1%2C0)%20%2B%20coalesce%20(t.qtde_pbf_1_pes&columns[5][searchable]=true&columns[5][orderable]=false&columns[5][search][value]=&columns[5][search][regex]=false&order[0][column]=2&order[0][dir]=asc&order[1][column]=0&order[1][dir]=asc&start=0&length=3147483647&search[value]=&search[regex]=false&export=1&export_data_comma=1&export_tipo=csv&'
     df_uni = pd.read_csv(url_uni, encoding='iso-8859-1')
     df_uni = df_uni.iloc[:, [0, 1, 2, 5]]
     df_uni['Data'] = pd.to_datetime(df_uni['Referência'] + '/01', format='%m/%Y/%d')
@@ -220,7 +223,7 @@ def Fig_multi_line_chart(df, selected_faixa_, faixa_, selected_estado_):
         if faixa == selected_faixa_:
             linha_estilo = dict(color='green', dash='solid', width=2)
         else:
-            linha_estilo = dict(dash='dash', width=1)
+            linha_estilo = dict(color='#a55462', dash='dash', width=1)
             
         fig_linha.add_trace(
             go.Scatter(
@@ -719,9 +722,11 @@ with tab_panorama:
             )
                 
         with col_type:
-            tipo_de_gráfico = st.radio(
+            tipo_de_gráfico = st.segmented_control(
                 label='Tipo de Gráfico',
-                options=["Padrão", "Proporção"],
+                options= ['Padrão', 'Proporção'],
+                default='Padrão',
+                selection_mode="single",
                 key='panorama_type_radio'
             )
                 
@@ -731,9 +736,10 @@ with tab_panorama:
                     'Média do ano': 'mean',
                     'Último mês': 'last'
                 }
-                selected_view = st.selectbox(
-                    'Opções da linha:', 
-                    list(view_options.keys()),
+                selected_view = st.segmented_control(
+                    label='Opções da linha:', 
+                    options= list(view_options.keys()),
+                    default='Média do ano',
                     key='panorama_view_select'
                 )
                 selected_aggregation = view_options[selected_view]
@@ -951,7 +957,7 @@ with tab_estado:
             with st.expander("Opções de Plotagem:"):
                 col_options, col_multi_plot = st.columns(2)
                 with col_options:
-                    selected_graph = st.radio("Selecione o tipo de gráfico para a visualização:", ['Linha','Candle', 'Tendência'], index=0)
+                    selected_graph = st.pills("Selecione o tipo de gráfico para a visualização:", ['Linha','Candle', 'Tendência'], default='Linha')
                 if selected_graph == 'Linha':
                     with col_multi_plot:
                         selected_multi_graph = st.radio("Opções do gráfico em linha:", ['Faixa de renda selecionada','Todas as faixas de renda'], index=0, key='multi_graph')
@@ -998,10 +1004,12 @@ with tab_estado:
                                 opcoes = list_faixa.copy() 
                                 opcoes.append('Todas')
                                 return opcoes
+                            def filtrar_opcoes(lista, excluir=None):
+                                if excluir:
+                                    return [item for item in lista if item != excluir]
+                                return lista
                             
-                            default_values = ['Pobreza']
-                            if faixa in list_faixa:
-                                default_values.insert(0, faixa)
+                            default_values = [faixa, filtrar_opcoes(list_faixa, faixa)[0]]
                             
                             selected_faixa_multi = st.multiselect(
                                 "Selecione a faixa de renda:",
