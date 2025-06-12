@@ -21,7 +21,7 @@ def format_numbers(valor):
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 @st.cache_data
 def carrengando_informações():
-    url = f'https://aplicacoes.mds.gov.br/sagi/servicos/misocial/?fl=codigo_ibge%2Canomes_s%20qtd_fam_ext_pob:cadun_qtde_fam_sit_extrema_pobreza_s%20qtd_fam_pob:cadun_qtde_fam_sit_pobreza_s%20qtd_fam_baixa_renda:cadun_qtd_familias_cadastradas_baixa_renda_i%20qtd_fam_acima_meio_sm:cadun_qtd_familias_cadastradas_rfpc_acima_meio_sm_i&fq=cadun_qtd_familias_cadastradas_baixa_renda_i%3A*&q=*%3A*&rows=600000&sort=anomes_s%20desc%2C%20codigo_ibge%20asc&wt=csv&fq=anomes_s:[201701%20TO%20202412]'
+    url = f'https://aplicacoes.mds.gov.br/sagi/servicos/misocial/?fl=codigo_ibge%2Canomes_s%20qtd_fam_ext_pob:cadun_qtde_fam_sit_extrema_pobreza_s%20qtd_fam_pob:cadun_qtde_fam_sit_pobreza_s%20qtd_fam_baixa_renda:cadun_qtd_familias_cadastradas_baixa_renda_i%20qtd_fam_acima_meio_sm:cadun_qtd_familias_cadastradas_rfpc_acima_meio_sm_i&fq=cadun_qtd_familias_cadastradas_baixa_renda_i%3A*&q=*%3A*&rows=600000&sort=anomes_s%20desc%2C%20codigo_ibge%20asc&wt=csv&fq=anomes_s:[201701%20TO%20202512]'
 
     df = pd.read_csv(url)
     df['Cod_Estado_Ibge'] = df['codigo_ibge'].astype(str).str[:2].astype(int)
@@ -89,7 +89,7 @@ def carrengando_informações_desemprego(estado=True):
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 @st.cache_data
 def carrengando_informações_fam_unipessoais():
-    url = 'https://aplicacoes.mds.gov.br/sagi/servicos/misocial/?fl=codigo_ibge%2Canomes_s%20cadun_qtd_familias_cadastradas_i&fq=cadun_qtd_familias_cadastradas_i%3A*&q=*%3A*&rows=300000&sort=anomes_s%20desc%2C%20codigo_ibge%20asc&wt=csv&fq=anomes_s:[202301%20TO%20202412]'
+    url = 'https://aplicacoes.mds.gov.br/sagi/servicos/misocial/?fl=codigo_ibge%2Canomes_s%20cadun_qtd_familias_cadastradas_i&fq=cadun_qtd_familias_cadastradas_i%3A*&q=*%3A*&rows=300000&sort=anomes_s%20desc%2C%20codigo_ibge%20asc&wt=csv&fq=anomes_s:[202301%20TO%20202512]'
 
     df = pd.read_csv(url)
     df['Cod_Estado_Ibge'] = df['codigo_ibge'].astype(str).str[:2].astype(int)
@@ -116,7 +116,7 @@ def carrengando_informações_fam_unipessoais():
 
     # VisData -> Famílias unipessoais beneficiárias e não beneficiárias do Programa Bolsa Família inscritas no Cadastro Único
     url_base = 'https://aplicacoes.cidadania.gov.br/vis/data3/v.php?q[]=oNOclsLerpibuKep3bV%2BgW9g05Kv2rmg2a19ZW51ZmymaX6JaV2JlWCbbWCNrMmlsKyamembs61ojMfGpt2slLysiJqdtKiftJ%2BuuqqSkpyZy6mmwraIp7G1WKvtnbKtp4%2B9wGPJrZjQ7ryVm3lwoNqlwLNyk7jNps94bsPcuaehg3Ct7qZwyViQxsKfz7CWwqONpbCsmpnpm7OtZ4zHxqbdrJS8rHlkZWhgWtyorrqcoLrGU5J9pNHfspOsqpuZqpi9s6qgxsKSm2ZU2razlai7mnXfmrnBnGiSx5TWsJiYtsCpqcSGr9qnwbebjrvGU86iU8PcuvfptJ6b7FmPk4Vynap2swC0r8SOh1yspFrJq7y1qY7EwlOsrJ%2FQ3G16nbX45%2BWirm6dnMnOlM6epn3rvKZceVWj562ytamOxdWYimWoy%2BS9ma%2B7pJvirHZxiKK4z6fToZTB4G2YoWibm%2Bb8%2BrqgjsqBgS3Agn3dsqKhrp6d4vzuwKCOyoGX2V2Dz%2Bq0pp21llq7qLnBmE2dwqAt6p%2FG3G2aq7qim92awG6nnMmBZIqmodHgtKadtqmfmWHCvKCdvNSm2Z6c0KRwhbGpo67ina6ynE3L0KfLqVPB4G2anbX45%2BWirsFXk8bToMuhlNCbvaOuaGZa4qfBs56fuM%2Bnz11b0um2pKG7qKnaosB3s52S3a%2FmeA%3D%3D'
-    url_data = '&ma=mes&ma=mes&dt1=2022-12-01&dt2=2024-10-01'
+    url_data = '&ma=mes&ma=mes&dt1=2022-12-01&dt2=2025-10-01'
     url_uni = f'{url_base}{url_data}&ag=e&wt=json&tp_funcao_consulta=0&draw=2&columns[0][data]=0&columns[0][name]=codigo&columns[0][searchable]=true&columns[0][orderable]=true&columns[0][search][value]=&columns[0][search][regex]=false&columns[1][data]=1&columns[1][name]=nome&columns[1][searchable]=true&columns[1][orderable]=false&columns[1][search][value]=&columns[1][search][regex]=false&columns[2][data]=2&columns[2][name]=mes_ano_formatado&columns[2][searchable]=true&columns[2][orderable]=true&columns[2][search][value]=&columns[2][search][regex]=false&columns[3][data]=3&columns[3][name]=qtde_pbf_1_pessoa_1&columns[3][searchable]=true&columns[3][orderable]=false&columns[3][search][value]=&columns[3][search][regex]=false&columns[4][data]=4&columns[4][name]=qtde_pbf_0_pessoa_1&columns[4][searchable]=true&columns[4][orderable]=false&columns[4][search][value]=&columns[4][search][regex]=false&columns[5][data]=5&columns[5][name]=(coalesce(t.qtde_pbf_0_pessoa_1%2C0)%20%2B%20coalesce%20(t.qtde_pbf_1_pes&columns[5][searchable]=true&columns[5][orderable]=false&columns[5][search][value]=&columns[5][search][regex]=false&order[0][column]=2&order[0][dir]=asc&order[1][column]=0&order[1][dir]=asc&start=0&length=3147483647&search[value]=&search[regex]=false&export=1&export_data_comma=1&export_tipo=csv&'
     df_uni = pd.read_csv(url_uni, encoding='iso-8859-1')
     df_uni = df_uni.iloc[:, [0, 1, 2, 5]]
@@ -219,7 +219,7 @@ def Fig_line_chart(df, selected_faixa_, faixa_, show_media=False):
         ),
         yaxis=dict(gridcolor='lightgrey'),
         title={
-            'text': f'Famílias inscritas no CadÚnico em {faixa_} (2017-2024)<br>{selected_estado}',
+            'text': f'Famílias inscritas no CadÚnico em {faixa_} (2017-2025)<br>{selected_estado}',
             'x': 0.5,
             'y': 0.95,
             'xanchor': 'center',
@@ -300,7 +300,7 @@ def Fig_multi_line_chart(df, selected_faixa_, faixa_, selected_estado_):
         ),
         yaxis=dict(gridcolor='lightgrey'),
         title={
-            'text': f'Famílias inscritas no CadÚnico em {faixa_} (2017-2024)<br>{selected_estado_}',
+            'text': f'Famílias inscritas no CadÚnico em {faixa_} (2017-2025)<br>{selected_estado_}',
             'x': 0.5,
             'y': 0.95,
             'xanchor': 'center',
@@ -502,9 +502,9 @@ def Fig_trend_rank(df, selected_estado_, faixa_, metodo=True):
     selected_sigla = df.loc[df['Estado'] == selected_estado_, 'Sigla'].unique()[0] 
     posicao = resultados['Sigla'].tolist().index(selected_sigla) + 1
 
-    titulo = (f"Inclinação da linha de tendência <b>{faixa_} por estado</b><br>2017/2024" 
+    titulo = (f"Inclinação da linha de tendência <b>{faixa_} por estado</b><br>2017/2025" 
             if metodo else 
-            f"Diferença percentual entre o último valor real e a linha de tendência <b>{faixa_} por estado</b><br>2017/2024")
+            f"Diferença percentual entre o último valor real e a linha de tendência <b>{faixa_} por estado</b><br>2017/2025")
 
     fig = px.bar(resultados, 
                 x='Sigla', 
@@ -903,7 +903,7 @@ with tab_panorama:
             )
             fig_sazonalidade.update_layout(
                 title={
-                    'text': f'Sazonalidade: Média mensal de famílias em {faixa} (2017-2024)<br>Brasil',
+                    'text': f'Sazonalidade: Média mensal de famílias em {faixa} (2017-2025)<br>Brasil',
                     'x': 0.5,
                     'y': 0.95,
                     'xanchor': 'center',
@@ -1169,7 +1169,7 @@ with tab_estado:
                                 line_dash="dash", 
                                 line_color="green",
                                 line_width=1, 
-                                annotation_text=f'Variação 2017-2024:<br>{variacao_percentual:.2f}%</b>', 
+                                annotation_text=f'Variação 2017-2025:<br>{variacao_percentual:.2f}%</b>', 
                                 annotation_position="top left"
                             )
 
@@ -1200,7 +1200,7 @@ with tab_estado:
                         #----------------------------------------------------------------------------------------------------------------------------------------
                         
                         def df_pizza(_df, selected_v):
-                            df_pizza = _df.loc[_df['Ano'] == 2024].iloc[-1]
+                            df_pizza = _df.loc[_df['Ano'] == 2025].iloc[-1]
                             
                             cols = ['fam_ext_pob', 'fam_pob', 'fam_baixa_renda', 'fam_acima_meio_sm']
                             data = [df_pizza[col] for col in cols]
@@ -1256,7 +1256,7 @@ with tab_estado:
 
                     fig_fam_uni_ind.update_layout(
                         title={
-                            'text': f'Número de Famílias Unipessoais Inscritas no CadÚnico - Todas as faixas de renda<br>{selected_estado} - (2023-2024) *Janela Procad',
+                            'text': f'Número de Famílias Unipessoais Inscritas no CadÚnico - Todas as faixas de renda<br>{selected_estado} - (2023-2025) *Janela Procad',
                             'x': 0.5,
                             'xanchor': 'center',
                             'yanchor': 'top'
@@ -1406,12 +1406,12 @@ with tab_estado:
                         df_diferenca, 
                         x='Data', 
                         y='Diferenca_Percentual',
-                        title=f'Diferença percentual Taxa de Desemprego<br>{selected_estado} - Brasil (2017-2024)'
+                        title=f'Diferença percentual Taxa de Desemprego<br>{selected_estado} - Brasil (2017-2025)'
                     )
 
                     fig_desemprego_diff.update_layout(
                         title={
-                            'text': f'Diferença percentual Taxa de Desemprego<br>{selected_estado} - Brasil (2017-2024)',
+                            'text': f'Diferença percentual Taxa de Desemprego<br>{selected_estado} - Brasil (2017-2025)',
                             'x': 0.5,
                             'xanchor': 'center',
                             'yanchor': 'top'
