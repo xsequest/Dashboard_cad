@@ -137,7 +137,7 @@ def carrengando_informações_fam_unipessoais():
     df_combinado = df_combinado.iloc[:, [0, 1, 2, 3, 4, 7, 5, 6]]
         
     return df_combinado
-         
+
 @st.cache_data
 def carregando_informações_media_familias_estado():
     df_populacao = sidrapy.get_table(table_code="4714", variable=93, territorial_level="3", ibge_territorial_code="all")
@@ -969,7 +969,13 @@ with tab_panorama:
 with tab_estado:
     with st.container(border=True):
         with st.container(border=True):
-            
+            #with st.expander("Métricas"):
+            #    col_metric_1, col_metric_2, col_metric_3, col_metric_4 = st.columns(4)
+            #    col_metric_1.metric(list_faixa[0], "70.000", "1.2%")
+            #    col_metric_2.metric(list_faixa[1], "70.000", "-8%")
+            #    col_metric_3.metric(list_faixa[2], "70.000", "4%")
+            #    col_metric_4.metric(list_faixa[3], '70.000')
+
             with st.expander("Opções de Plotagem:"):
                 col_options, col_multi_plot = st.columns(2)
                 with col_options:
